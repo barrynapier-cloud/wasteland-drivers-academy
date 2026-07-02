@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Wasteland Drivers Academy — A Goth Driving School RPG</title>
+  <meta name="description" content="A goth-anime-kawaii RPG that teaches the Washington State Driver Guide. Study cards, take quiz challenges, battle demons, level up." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Inter:wght@400;500;600;700&family=Press+Start+2P&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css?v=20260702a" />
+</head>
+<body>
+  <div id="bg-decor" aria-hidden="true">
+    <div class="petals" id="petals"></div>
+  </div>
+
+  <!-- ====================== SCENE: LOGIN ====================== -->
+  <section class="scene active" id="scene-login">
+    <div class="login-card">
+      <p class="eyebrow" id="login-eyebrow">⚡ PERMIT LEGENDS ⚡</p>
+      <h1 class="login-title">Permit<br><span>Legends</span></h1>
+      <p class="login-tag">Six bosses guard the Washington permit test. Beat them here, pass it there.</p>
+      <div class="login-form">
+        <label class="login-label" for="login-name">Name your driver</label>
+        <input type="text" id="login-name" maxlength="20" placeholder="e.g. Rune, Echo, Saint" autocomplete="off" />
+        <p class="login-label" style="margin-top:22px">Choose your adventure</p>
+        <p class="login-sublabel">Five worlds. One exam. Pick your vibe.</p>
+        <div class="adventure-grid" id="adventure-grid"></div>
+        <p class="login-label" style="margin-top:22px">Choose your driver</p>
+        <p class="login-sublabel" id="avatar-sublabel">Three drivers. Three builds. One road.</p>
+        <div class="avatar-grid" id="avatar-grid"></div>
+        <button class="primary-btn big" id="login-start" disabled>Begin the Run →</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ====================== SCENE: INTRO / GUIDE ====================== -->
+  <section class="scene" id="scene-intro">
+    <div class="intro-card">
+      <p class="eyebrow">⛧ FIRST INVOCATION ⛧</p>
+      <h2 class="intro-title" id="intro-greeting">Welcome, Driver.</h2>
+
+      <p class="intro-driver-lore hidden" id="intro-driver-lore"></p>
+
+      <div class="intro-myth">
+        <p class="intro-myth-heading">The Origin</p>
+        <p id="intro-origin">Before the highways, the land was held by six old houses. When the asphalt came, the houses didn't leave. They crawled into the rules. Now every law in the Washington Driver Guide is a wall, and behind each wall waits a demon who profits when you fail.</p>
+        <p class="intro-myth-line" id="intro-myth-line">Six bosses. Six trials. One license at the end.</p>
+      </div>
+
+      <div class="how-it-works">
+        <div class="how-step" style="--d:0">
+          <div class="how-num">I</div>
+          <h3>Study</h3>
+          <p>Five illustrated cards per chapter. One number per card. Burn them in.</p>
+        </div>
+        <div class="how-step" style="--d:1">
+          <div class="how-num">II</div>
+          <h3>Quiz Trial</h3>
+          <p>Five questions prove you read. Correct answers in a row build your <strong>Streak Multiplier</strong>.</p>
+        </div>
+        <div class="how-step" style="--d:2">
+          <div class="how-num">III</div>
+          <h3>Boss Battle</h3>
+          <p>Face the demon. Correct = strike. Wrong = struck. HP on both sides.</p>
+        </div>
+        <div class="how-step" style="--d:3">
+          <div class="how-num">IV</div>
+          <h3>Reward</h3>
+          <p>Claim a sigil. Gain XP. Level up. Six sigils end the initiation.</p>
+        </div>
+      </div>
+
+      <div class="intro-key">
+        <strong>Rule of the Real World.</strong> Every number, sign, and law in this game is lifted straight from the Washington State Driver Guide. Beat the demons here. The test there is the same fight without the costumes.
+      </div>
+
+      <button class="primary-btn big" id="intro-continue">Enter the Map →</button>
+    </div>
+  </section>
+
+  <!-- ====================== SCENE: MAP (chapter select) ====================== -->
+  <section class="scene" id="scene-map">
+    <header class="hud">
+      <div class="hud-avatar" id="hud-avatar"></div>
+      <div class="hud-info">
+        <p class="hud-name" id="hud-name">—</p>
+        <p class="hud-level">Lv <span id="hud-level">1</span> · <span id="hud-xp">0</span> XP</p>
+      </div>
+      <div class="hud-stats">
+        <div><strong id="hud-sigils">0</strong><span>Sigils</span></div>
+        <div><strong id="hud-streak">0</strong><span>Best Streak</span></div>
+      </div>
+      <div class="hud-audio">
+        <button class="audio-toggle" id="toggle-sfx" title="Sound effects" aria-label="Toggle sound effects">🔊</button>
+        <button class="audio-toggle" id="toggle-voice" title="Demon voice" aria-label="Toggle demon voice">🗣</button>
+      </div>
+      <button class="ghost-btn small" id="hud-logout">↻ Restart</button>
+    </header>
+
+    <div class="map-wrap">
+      <h2 class="map-title">The Six Houses</h2>
+      <p class="map-sub">Each house is a category on the written exam. Each demon is a number you must learn.</p>
+      <div class="map-grid" id="map-grid"></div>
+      <div class="map-cheat">
+        <button class="ghost-btn" id="open-trials">⚔ Trials of the Wastes (Quick Tests)</button>
+        <button class="ghost-btn" id="open-cheat">📜 Open the Black Ledger (Cheat Sheet)</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ====================== SCENE: TRIALS HUB ====================== -->
+  <section class="scene" id="scene-trials">
+    <header class="ledger-hud">
+      <button class="ghost-btn small" id="trials-back">← Map</button>
+      <h2 class="ledger-title">⚔ Trials of the Wastes</h2>
+      <span style="width:64px"></span>
+    </header>
+    <p class="ledger-sub">Bite-size tests of what you've learned. No demons, no HP, just you and the numbers. Sharpen the blade between battles.</p>
+    <div class="trials-grid" id="trials-grid"></div>
+  </section>
+
+  <!-- ====================== SCENE: TRIAL RUN ====================== -->
+  <section class="scene" id="scene-trial-run">
+    <header class="quiz-hud" id="trial-run-hud"></header>
+    <div class="quiz-stage" id="trial-run-stage"></div>
+  </section>
+
+  <!-- ====================== SCENE: TRIAL RESULT ====================== -->
+  <section class="scene" id="scene-trial-result">
+    <div class="trial-result-stage" id="trial-result"></div>
+  </section>
+
+  <!-- ====================== SCENE: CHAPTER INTRO ====================== -->
+  <section class="scene" id="scene-chapter-intro">
+    <div class="chapter-intro" id="chapter-intro-inner">
+      <!-- populated by JS -->
+    </div>
+  </section>
+
+  <!-- ====================== SCENE: STUDY ====================== -->
+  <section class="scene" id="scene-study">
+    <header class="study-hud">
+      <button class="ghost-btn small" id="study-back">← Map</button>
+      <div class="study-progress">
+        <span id="study-counter">1 / 5</span>
+        <div class="study-bar"><div class="study-bar-fill" id="study-bar-fill"></div></div>
+      </div>
+      <p class="study-chapter" id="study-chapter">—</p>
+    </header>
+
+    <div class="study-stage" id="study-stage">
+      <!-- populated by JS -->
+    </div>
+
+    <div class="study-actions">
+      <button class="ghost-btn" id="study-prev">← Previous</button>
+      <button class="primary-btn" id="study-next">Next Lesson →</button>
+    </div>
+  </section>
+
+  <!-- ====================== SCENE: QUIZ CHALLENGE ====================== -->
+  <section class="scene" id="scene-quiz">
+    <header class="quiz-hud">
+      <button class="ghost-btn small" id="quiz-back">← Map</button>
+      <div class="quiz-progress">
+        <span id="quiz-counter">Q 1 / 5</span>
+        <div class="quiz-bar"><div class="quiz-bar-fill" id="quiz-bar-fill"></div></div>
+      </div>
+      <div class="quiz-stats">
+        <span class="quiz-streak">🔥 <strong id="quiz-streak-display">0</strong></span>
+        <span class="quiz-xp">XP <strong id="quiz-xp-display">0</strong></span>
+      </div>
+    </header>
+
+    <div class="quiz-stage" id="quiz-stage">
+      <!-- populated by JS -->
+    </div>
+  </section>
+
+  <!-- ====================== SCENE: BATTLE ====================== -->
+  <section class="scene" id="scene-battle">
+    <div class="battle-arena" id="battle-arena">
+
+      <div class="battle-sky" id="battle-sky"></div>
+
+      <!-- ARENA STRIP — sticky, always visible -->
+      <div class="battle-stage" id="battle-stage">
+        <div class="battle-effects" id="battle-effects"></div>
+
+        <!-- HERO side (left) -->
+        <div class="fighter fighter-hero">
+          <div class="fighter-portrait" id="battle-hero">
+            <img id="battle-hero-img" alt="" />
+          </div>
+          <p class="fighter-name" id="battle-hero-name">—</p>
+          <div class="fighter-hp">
+            <div class="fighter-hp-fill hp-hero" id="battle-hero-hp-fill"></div>
+            <p class="fighter-hp-text" id="battle-hero-hp-text">100 / 100</p>
+          </div>
+          <p class="fighter-combo">x<strong id="battle-combo">1.0</strong> · <span id="battle-streak">streak 0</span></p>
+        </div>
+
+        <!-- VS pivot -->
+        <div class="battle-vs">
+          <span class="vs-mark">⛧</span>
+          <span class="vs-text">VS</span>
+          <span class="vs-mark">⛧</span>
+        </div>
+
+        <!-- DEMON side (right) -->
+        <div class="fighter fighter-demon">
+          <div class="fighter-portrait fighter-portrait-demon" id="battle-demon">
+            <img id="battle-demon-img" alt="" />
+          </div>
+          <p class="fighter-name fighter-name-demon" id="battle-demon-name">—</p>
+          <div class="fighter-hp">
+            <div class="fighter-hp-fill hp-demon" id="battle-hp-fill"></div>
+            <p class="fighter-hp-text" id="battle-hp-text">100 / 100</p>
+          </div>
+          <p class="fighter-threat" id="battle-threat">—</p>
+        </div>
+      </div>
+
+      <!-- QUESTION PANEL — scrolls below the sticky stage -->
+      <div class="battle-ui" id="battle-ui">
+        <p class="battle-topic" id="battle-topic">The Sanguine Trial</p>
+        <p class="battle-q" id="battle-q">—</p>
+        <div class="battle-options" id="battle-options"></div>
+        <div class="battle-feedback hidden" id="battle-feedback"></div>
+        <button class="primary-btn hidden" id="battle-next">Strike Again →</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ====================== SCENE: VICTORY ====================== -->
+  <section class="scene" id="scene-victory">
+    <div class="victory-stage" id="victory-stage">
+      <!-- populated by JS -->
+    </div>
+  </section>
+
+  <!-- ====================== SCENE: DEFEAT ====================== -->
+  <section class="scene" id="scene-defeat">
+    <div class="defeat-stage">
+      <p class="eyebrow defeat-eyebrow">⛧ YOU FELL ⛧</p>
+      <h2 class="defeat-title" id="defeat-title">The demon took you.</h2>
+      <p class="defeat-lede" id="defeat-lede">No shame in this. Re-read the lesson. The road waits.</p>
+      <div class="defeat-actions">
+        <button class="primary-btn" id="defeat-retry">Rise & Retry ↻</button>
+        <button class="ghost-btn" id="defeat-study">📖 Re-study Chapter</button>
+        <button class="ghost-btn" id="defeat-map">← Back to Map</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ====================== SCENE: GAME COMPLETE ====================== -->
+  <section class="scene" id="scene-complete">
+    <div class="complete-stage">
+      <p class="eyebrow">⛧ INITIATION COMPLETE ⛧</p>
+      <h2 class="complete-title">You Survived the Six Houses</h2>
+      <p class="complete-lede">Six demons fallen. Six sigils claimed. The road is yours now. Walk into the DOL and take it.</p>
+      <div class="complete-sigils" id="complete-sigils"></div>
+      <div class="complete-stats">
+        <div><strong id="complete-xp">0</strong><span>Total XP</span></div>
+        <div><strong id="complete-level">1</strong><span>Final Level</span></div>
+        <div><strong id="complete-best">0</strong><span>Best Streak</span></div>
+      </div>
+      <p class="complete-foot">Now take the real one. The State of Washington awaits.</p>
+      <div class="complete-actions">
+        <button class="primary-btn" id="complete-replay">Battle Again ↺</button>
+        <button class="ghost-btn" id="complete-ledger">📜 Black Ledger</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ====================== SCENE: CHEAT SHEET ====================== -->
+  <section class="scene" id="scene-ledger">
+    <header class="ledger-hud">
+      <button class="ghost-btn small" id="ledger-back">← Back</button>
+      <h2 class="ledger-title">📜 The Black Ledger</h2>
+      <button class="ghost-btn small" id="ledger-print">🖨 Print</button>
+    </header>
+    <p class="ledger-sub">Every number Washington traffic law demands you memorize. Burn it into your skull.</p>
+    <div class="ledger-grid" id="ledger-grid"></div>
+  </section>
+
+  <!-- ====================== HINT MODAL (global) ====================== -->
+  <div id="hint-modal" aria-hidden="true">
+    <div class="hint-bg" id="hint-bg"></div>
+    <div class="hint-card" id="hint-card">
+      <button class="hint-close" id="hint-close" aria-label="Close">×</button>
+      <!-- content injected by JS -->
+    </div>
+  </div>
+
+  <!-- ====================== Footer / sources ====================== -->
+  <footer class="app-footer" id="app-footer">
+    <p>Built from the <a href="http://www.secureyourload.com/Documents/driverguide-en.pdf" target="_blank" rel="noopener">Washington State Driver Guide</a> · RCW <a href="https://app.leg.wa.gov/RCW/default.aspx?cite=46.61.502" target="_blank" rel="noopener">46.61.502</a>, <a href="https://app.leg.wa.gov/RCW/default.aspx?cite=46.61.503" target="_blank" rel="noopener">46.61.503</a>, <a href="https://app.leg.wa.gov/RCW/default.aspx?cite=46.61.185" target="_blank" rel="noopener">46.61.185</a>, <a href="https://app.leg.wa.gov/RCW/default.aspx?cite=46.61.673" target="_blank" rel="noopener">46.61.673</a> · Distraction stats: <a href="https://www.nsc.org/" target="_blank" rel="noopener">National Safety Council</a></p>
+  </footer>
+
+  <script src="audio.js?v=20260702a"></script>
+  <script src="data.js?v=20260702a"></script>
+  <script src="chapters.js?v=20260702a"></script>
+  <script src="battle-questions.js?v=20260702a"></script>
+  <script src="themes.js?v=20260702a"></script>
+  <script src="quests.js?v=20260702a"></script>
+  <script src="app.js?v=20260702a"></script>
+</body>
+</html>

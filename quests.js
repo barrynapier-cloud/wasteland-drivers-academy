@@ -17,16 +17,24 @@ const Quests = (() => {
   let timerId = null;
 
   // ---- Build a combined question pool across every chapter ----
+  // Free tier draws from chapter 1 only; the unlock opens the full bank.
+  function paidTier() { return (typeof isPaid === 'function') ? isPaid() : true; }
+
   function allBattleQuestions() {
     const out = [];
+    const allow = paidTier() ? null : ['blood'];
     if (typeof BATTLE_QUESTIONS !== 'undefined') {
       Object.keys(BATTLE_QUESTIONS).forEach(cid => {
+        if (allow && !allow.includes(cid)) return;
         BATTLE_QUESTIONS[cid].forEach(item => out.push({ ...item, chapterId: cid }));
       });
     }
     // Fold in chapter quiz questions too — more variety, sign images included.
     if (typeof CHAPTERS !== 'undefined') {
-      CHAPTERS.forEach(c => c.quiz.forEach(item => out.push({ ...item, chapterId: c.id })));
+      CHAPTERS.forEach(c => {
+        if (allow && !allow.includes(c.id)) return;
+        c.quiz.forEach(item => out.push({ ...item, chapterId: c.id }));
+      });
     }
     return out;
   }
@@ -86,12 +94,12 @@ const Quests = (() => {
         <p class="trial-best">Marks against you · <strong>${nMistakes}</strong></p>
         <button class="primary-btn small trial-go" ${nMistakes ? '' : 'disabled'}>${nMistakes ? 'Atone →' : 'Nothing to Atone'}</button>
       </div>
-      <div class="trial-card" data-mode="exam" style="--tc:#fff7eb">
+      <div class="trial-card ${paidTier() ? '' : 'trial-card-dim'}" data-mode="exam" style="--tc:#fff7eb">
         <div class="trial-icon">🕯</div>
         <h3 class="trial-name">The Final Reckoning</h3>
         <p class="trial-desc">A mock written exam. 25 questions across all six houses, no hints, no lessons. Score 80% and you'd pass the real one.</p>
-        <p class="trial-best">${best.exam != null ? `Best this session · <strong>${best.exam}%</strong>` : `Untested · <strong>—</strong>`}</p>
-        <button class="primary-btn small trial-go">Sit the Exam →</button>
+        <p class="trial-best">${paidTier() ? (best.exam != null ? `Best this session · <strong>${best.exam}%</strong>` : `Untested · <strong>—</strong>`) : 'Full version · <strong>$20 unlock</strong>'}</p>
+        <button class="primary-btn small trial-go">${paidTier() ? 'Sit the Exam →' : '🔓 Unlock to Sit →'}</button>
       </div>
     `;
 
@@ -100,7 +108,10 @@ const Quests = (() => {
     const redeemBtn = wrap.querySelector('[data-mode="redeem"] .trial-go');
     if (nMistakes) redeemBtn.addEventListener('click', () => { if (window.Sound) Sound.fx.start(); startRedemption(); });
     wrap.querySelector('[data-mode="exam"] .trial-go')
-      .addEventListener('click', () => { if (window.Sound) Sound.fx.start(); startExam(); });
+      .addEventListener('click', () => {
+        if (!paidTier()) { window.location.href = 'index.html#pricing'; return; }
+        if (window.Sound) Sound.fx.start(); startExam();
+      });
 
     const picks = document.getElementById('trial-chapter-picks');
     unlocked.forEach(c => {

@@ -44,6 +44,32 @@ function showScene(id) {
   window.scrollTo({ top: 0, behavior: 'instant' });
 }
 
+// ---------- Purchase gate + persistence (localStorage) ----------
+function validCode(code) {
+  const m = /^LEGEND-([A-Z0-9]{4})-([A-Z0-9]{4})$/.exec((code || '').trim().toUpperCase());
+  if (!m) return false;
+  const body = m[1] + m[2];
+  return body.split('').reduce((a, ch) => a + ch.charCodeAt(0) * 7, 0) % 97 === 55;
+}
+function isPaid() {
+  try { return validCode(localStorage.getItem('pl_unlock') || ''); } catch (e) { return false; }
+}
+
+function saveProgress() {
+  try {
+    localStorage.setItem('pl_save', JSON.stringify({
+      name: player.name, avatar: player.avatar, themeId: player.themeId || 'wasteland',
+      xp: player.xp, level: player.level, bestStreak: player.bestStreak,
+      sigils: player.sigils, completed: player.completed, stats: player.stats,
+      mistakes: player.mistakes, revealed: Array.from(revealedKeys)
+    }));
+  } catch (e) { /* private mode etc — play on without saves */ }
+}
+function loadProgress() {
+  try { const raw = localStorage.getItem('pl_save'); return raw ? JSON.parse(raw) : null; } catch (e) { return null; }
+}
+function clearProgress() { try { localStorage.removeItem('pl_save'); } catch (e) {} }
+
 // ---------- Learning ledger ----------
 // Every answered question in every mode flows through here.
 // Misses land in player.mistakes; a later correct answer anywhere redeems them.
@@ -53,6 +79,8 @@ function recordAnswer(chapterId, q, isRight) {
   if (!chapterId || !q) return;
   const s = player.stats[chapterId] || (player.stats[chapterId] = { answered: 0, correct: 0 });
   s.answered++;
+  // Persist after every answer — misses and mastery survive the session.
+  setTimeout(saveProgress, 0);
   if (isRight) {
     s.correct++;
     const key = mistakeKey(chapterId, q);
@@ -115,9 +143,11 @@ const AVATARS = [
   }
 ];
 
-function initLogin() {
+function renderAvatarGrid() {
   const grid = $('avatar-grid');
   grid.innerHTML = '';
+  player.avatar = null;
+  player.avatarMeta = null;
   AVATARS.forEach((a, i) => {
     const tile = el('div', 'avatar-pick');
     tile.dataset.id = a.id;
@@ -141,6 +171,72 @@ function initLogin() {
     });
     grid.appendChild(tile);
   });
+  checkLoginReady();
+}
+
+function renderAdventureGrid() {
+  const grid = $('adventure-grid');
+  if (!grid || typeof THEMES === 'undefined') return;
+  grid.innerHTML = '';
+  Object.values(THEMES).forEach((t, i) => {
+    const tile = el('div', 'adventure-pick');
+    tile.dataset.id = t.id;
+    tile.style.setProperty('--idx', i);
+    tile.innerHTML = `
+      <span class="adventure-icon">${t.icon}</span>
+      <span class="adventure-name">${esc(t.name)}</span>
+      <span class="adventure-pitch">${esc(t.pitch)}</span>`;
+    tile.addEventListener('click', () => {
+      document.querySelectorAll('.adventure-pick').forEach(p => p.classList.remove('selected'));
+      tile.classList.add('selected');
+      player.themeId = t.id;
+      applyTheme(t.id);
+      renderAvatarGrid(); // avatars belong to the world
+      sfx('select');
+      checkLoginReady();
+    });
+    grid.appendChild(tile);
+  });
+  // Default: the original
+  const first = grid.querySelector('[data-id="wasteland"]');
+  if (first) { first.classList.add('selected'); player.themeId = 'wasteland'; }
+}
+
+function resumeSavedRun(save) {
+  applyTheme(save.themeId || 'wasteland');
+  Object.assign(player, {
+    name: save.name, avatar: save.avatar, themeId: save.themeId || 'wasteland',
+    xp: save.xp || 0, level: save.level || 1, bestStreak: save.bestStreak || 0,
+    sigils: save.sigils || [], completed: save.completed || {},
+    stats: save.stats || {}, mistakes: save.mistakes || []
+  });
+  player.avatarMeta = AVATARS.find(a => a.img === save.avatar) || AVATARS[0];
+  revealedKeys.clear();
+  (save.revealed || []).forEach(id => revealedKeys.add(id));
+  syncHud();
+  renderMap();
+  showScene('scene-map');
+}
+
+function initLogin() {
+  renderAdventureGrid();
+  renderAvatarGrid();
+
+  // Saved run? Offer to resume — cross-session return visits are where
+  // spaced retrieval actually happens.
+  const save = loadProgress();
+  if (save && save.name) {
+    const card = document.querySelector('.login-card');
+    const banner = el('div', 'resume-banner');
+    banner.innerHTML = `
+      <p class="resume-text">⚡ <strong>${esc(save.name)}</strong> — Lv ${save.level || 1} · ${(save.sigils || []).length} sigils · ${(save.mistakes || []).length} marks to atone</p>
+      <button class="primary-btn" id="login-resume">Resume the Run →</button>
+      <button class="ghost-btn small" id="login-fresh">Start Over</button>
+    `;
+    card.insertBefore(banner, card.querySelector('.login-form'));
+    $('login-resume').addEventListener('click', () => { sfx('start'); resumeSavedRun(save); });
+    $('login-fresh').addEventListener('click', () => { clearProgress(); banner.remove(); sfx('ui'); });
+  }
 
   $('login-name').addEventListener('input', (e) => {
     player.name = e.target.value.trim();
@@ -152,6 +248,14 @@ function initLogin() {
   $('login-start').addEventListener('click', () => {
     if (!player.name || !player.avatar) return;
     const meta = player.avatarMeta || {};
+    // Theme the intro myth
+    const t = (typeof THEMES !== 'undefined' && THEMES[player.themeId]) ? THEMES[player.themeId] : null;
+    if (t) {
+      $('intro-origin').textContent = t.origin;
+      $('intro-myth-line').textContent = 'Six bosses. Six trials. One license at the end.';
+      const eyebrow = document.querySelector('#scene-intro .eyebrow');
+      if (eyebrow) eyebrow.textContent = t.brand.eyebrow;
+    }
     $('intro-greeting').textContent = `Welcome, ${player.name}.`;
     const loreEl = $('intro-driver-lore');
     if (loreEl && meta.name) {
@@ -180,6 +284,7 @@ function initIntro() {
 // MAP SCENE
 // ============================================================
 function syncHud() {
+  if (player.name) saveProgress();
   $('hud-avatar').style.backgroundImage = `url('${player.avatar}')`;
   $('hud-name').textContent = player.name;
   $('hud-level').textContent = player.level;
@@ -195,9 +300,12 @@ function renderMap() {
     const tile = el('div', 'chapter-tile');
     tile.style.setProperty('--tc', c.color);
     tile.style.setProperty('--idx', i);
-    const isUnlocked = (i === 0) || player.completed[CHAPTERS[i - 1].id];
+    const chainUnlocked = (i === 0) || player.completed[CHAPTERS[i - 1].id];
+    const payLocked = i > 0 && !isPaid();
+    const isUnlocked = chainUnlocked && !payLocked;
     const isComplete = !!player.completed[c.id];
     if (!isUnlocked) tile.classList.add('locked');
+    if (payLocked) tile.classList.add('paylocked');
     if (isComplete) tile.classList.add('completed');
     const mastery = chapterMastery(c.id);
     tile.innerHTML = `
@@ -216,6 +324,10 @@ function renderMap() {
     `;
     if (isUnlocked) {
       tile.addEventListener('click', () => enterChapter(c.id));
+    } else if (payLocked) {
+      const badge = el('div', 'ct-paybadge', '🔓 Unlock all worlds · $20');
+      tile.appendChild(badge);
+      tile.addEventListener('click', () => { window.location.href = 'index.html#pricing'; });
     }
     grid.appendChild(tile);
   });

@@ -11,3 +11,5 @@ node_modules/
 dist/
 build/
 .claude/
+.vercel
+codes-private.txt

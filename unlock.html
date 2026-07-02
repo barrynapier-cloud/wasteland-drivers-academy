@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Unlock — Permit Legends</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700;900&family=Inter:wght@400;600;800&family=Press+Start+2P&display=swap" rel="stylesheet" />
+  <style>
+    body { margin: 0; min-height: 100vh; display: grid; place-items: center; background: radial-gradient(ellipse at top, #2a0810, #150305 65%); color: #fff0f5; font-family: "Inter", system-ui, sans-serif; }
+    .card { max-width: 420px; width: calc(100% - 48px); background: rgba(20,5,10,0.65); border: 1px solid rgba(255,166,201,0.3); border-radius: 24px; padding: 40px 34px; text-align: center; }
+    h1 { font-family: "Cinzel", serif; font-weight: 900; font-size: 30px; margin: 0 0 8px; color: #fff7eb; }
+    p { color: #b89aa8; font-size: 14px; }
+    input { width: 100%; padding: 14px 16px; margin: 18px 0 12px; border-radius: 12px; border: 1px solid rgba(255,166,201,0.35); background: rgba(0,0,0,0.35); color: #fff7eb; font-family: "Press Start 2P", monospace; font-size: 11px; text-align: center; letter-spacing: 0.15em; text-transform: uppercase; }
+    button { width: 100%; padding: 15px; border: 0; border-radius: 999px; background: linear-gradient(120deg, #ff6fa3, #a855f7); color: #fff; font-weight: 800; font-size: 15px; cursor: pointer; }
+    .msg { min-height: 22px; font-size: 13px; margin-top: 12px; }
+    .msg.ok { color: #6ee7b7; }
+    .msg.bad { color: #ff8094; }
+    a { color: #ff6fa3; font-size: 13px; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>Claim Your Legend</h1>
+    <p>Enter the access code from your purchase confirmation. It unlocks every world, on this device, forever.</p>
+    <input id="code" placeholder="LEGEND-XXXX-XXXX" maxlength="16" autocomplete="off" />
+    <button id="go">Unlock →</button>
+    <p class="msg" id="msg"></p>
+    <p><a href="index.html">← Back</a> · <a href="play.html">Play free chapter</a></p>
+  </div>
+  <script>
+    function validCode(code) {
+      const m = /^LEGEND-([A-Z0-9]{4})-([A-Z0-9]{4})$/.exec((code || '').trim().toUpperCase());
+      if (!m) return false;
+      const body = m[1] + m[2];
+      return body.split('').reduce((a, ch) => a + ch.charCodeAt(0) * 7, 0) % 97 === 55;
+    }
+    const msg = document.getElementById('msg');
+    const input = document.getElementById('code');
+    function attempt(code) {
+      if (validCode(code)) {
+        try { localStorage.setItem('pl_unlock', code.trim().toUpperCase()); } catch (e) {}
+        msg.className = 'msg ok';
+        msg.textContent = 'Unlocked. Entering the wastes…';
+        setTimeout(() => { location.href = 'play.html'; }, 900);
+      } else {
+        msg.className = 'msg bad';
+        msg.textContent = 'That code is not in the ledger. Check for typos.';
+      }
+    }
+    document.getElementById('go').addEventListener('click', () => attempt(input.value));
+    input.addEventListener('keydown', (e) => { if (e.key === 'Enter') attempt(input.value); });
+    // Arriving from a Stripe success redirect: ?code=LEGEND-....
+    const q = new URLSearchParams(location.search).get('code');
+    if (q) { input.value = q; attempt(q); }
+  </script>
+</body>
+</html>

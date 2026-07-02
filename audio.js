@@ -13,6 +13,11 @@ const Sound = (() => {
   let voiceOn = true;
   let unlocked = false;
   let demonVoice = null;
+  // Theme sound personality — which waveforms the FX lean on.
+  let flavor = { lead: 'triangle', bass: 'sawtooth' };
+  // Active taunt bank + whether pre-rendered clips exist for it.
+  let tauntBank = null;
+  let clipsAvailable = true;
 
   // AudioContext must be created/resumed from a user gesture.
   function ensure() {
@@ -77,12 +82,12 @@ const Sound = (() => {
   // Named sound effects
   // ============================================================
   const FX = {
-    ui()      { tone({ type: 'triangle', freq: 320, dur: 0.07, gain: 0.12, glideTo: 200 }); },
-    select()  { chord([523, 784], { type: 'triangle', dur: 0.16, gain: 0.14, stagger: 0.05 }); },
+    ui()      { tone({ type: flavor.lead, freq: 320, dur: 0.07, gain: 0.12, glideTo: 200 }); },
+    select()  { chord([523, 784], { type: flavor.lead, dur: 0.16, gain: 0.14, stagger: 0.05 }); },
     hover()   { tone({ type: 'sine', freq: 660, dur: 0.05, gain: 0.05 }); },
 
-    correct() { chord([659, 880, 1319], { type: 'triangle', dur: 0.28, gain: 0.16, stagger: 0.06 }); },
-    wrong()   { tone({ type: 'sawtooth', freq: 160, dur: 0.32, gain: 0.18, glideTo: 70 });
+    correct() { chord([659, 880, 1319], { type: flavor.lead, dur: 0.28, gain: 0.16, stagger: 0.06 }); },
+    wrong()   { tone({ type: flavor.bass, freq: 160, dur: 0.32, gain: 0.18, glideTo: 70 });
                 tone({ type: 'square', freq: 110, dur: 0.3, gain: 0.08, glideTo: 60 }); },
 
     // Hero strike: a metal slash + thud
@@ -95,19 +100,19 @@ const Sound = (() => {
                 tone({ type: 'sawtooth', freq: 260, dur: 0.18, gain: 0.14, glideTo: 90, delay: 0.02 }); },
 
     // Boss claws back: growl sweep + low impact
-    bossStrike() { tone({ type: 'sawtooth', freq: 220, dur: 0.4, gain: 0.2, glideTo: 50 });
+    bossStrike() { tone({ type: flavor.bass, freq: 220, dur: 0.4, gain: 0.2, glideTo: 50 });
                    noise({ dur: 0.35, gain: 0.34, type: 'lowpass', freq: 900, glideTo: 120, delay: 0.05 });
                    tone({ type: 'square', freq: 80, dur: 0.3, gain: 0.18, glideTo: 40, delay: 0.08 }); },
 
     combo(n)  { const base = 520 + Math.min(8, n) * 90;
-                tone({ type: 'triangle', freq: base, dur: 0.14, gain: 0.14, glideTo: base * 1.5 }); },
+                tone({ type: flavor.lead, freq: base, dur: 0.14, gain: 0.14, glideTo: base * 1.5 }); },
 
     victory() { const seq = [523, 659, 784, 1047, 1319];
-                seq.forEach((f, i) => tone({ type: 'triangle', freq: f, dur: 0.3, gain: 0.16, delay: i * 0.12 }));
+                seq.forEach((f, i) => tone({ type: flavor.lead, freq: f, dur: 0.3, gain: 0.16, delay: i * 0.12 }));
                 chord([523, 784, 1047], { type: 'sine', dur: 1.2, gain: 0.1, delay: 0.6 }); },
 
     defeat()  { const seq = [330, 294, 247, 196];
-                seq.forEach((f, i) => tone({ type: 'sawtooth', freq: f, dur: 0.5, gain: 0.14, delay: i * 0.22, glideTo: f * 0.92 })); },
+                seq.forEach((f, i) => tone({ type: flavor.bass, freq: f, dur: 0.5, gain: 0.14, delay: i * 0.22, glideTo: f * 0.92 })); },
 
     levelup() { const seq = [659, 880, 1047, 1319, 1760];
                 seq.forEach((f, i) => tone({ type: 'sine', freq: f, dur: 0.25, gain: 0.13, delay: i * 0.07 })); },
@@ -117,7 +122,7 @@ const Sound = (() => {
 
     tick()    { tone({ type: 'square', freq: 900, dur: 0.04, gain: 0.08 }); },
     timesUp() { tone({ type: 'sawtooth', freq: 200, dur: 0.6, gain: 0.18, glideTo: 80 }); },
-    start()   { chord([392, 523, 659], { type: 'triangle', dur: 0.4, gain: 0.14, stagger: 0.08 }); }
+    start()   { chord([392, 523, 659], { type: flavor.lead, dur: 0.4, gain: 0.14, stagger: 0.08 }); }
   };
 
   // ============================================================
@@ -208,20 +213,28 @@ const Sound = (() => {
       strike: ["Another mark against you.", "The ledger remembers.", "You are almost spent."],
     }
   };
+  function bank() { return tauntBank || TAUNTS; }
   function bossCry(chapterId) {
-    if (playClip(`${chapterId}-cry`)) return;
-    const t = TAUNTS[chapterId]; if (t) say(t.cry, { pitch: 0.35, rate: 0.82 });
+    if (clipsAvailable && playClip(`${chapterId}-cry`)) return;
+    const t = bank()[chapterId]; if (t) say(t.cry, { pitch: 0.35, rate: 0.82 });
   }
   function bossTaunt(chapterId) {
-    const t = TAUNTS[chapterId];
+    const t = bank()[chapterId];
     const n = (t && t.strike.length) ? t.strike.length : 3;
     const i = Math.floor(Math.random() * n);
-    if (playClip(`${chapterId}-taunt${i}`)) return;
+    if (clipsAvailable && playClip(`${chapterId}-taunt${i}`)) return;
     if (t && t.strike.length) say(t.strike[i] || t.strike[0], { pitch: 0.38, rate: 0.9 });
   }
   function bossDefeat(chapterId, fallbackText) {
-    if (playClip(`${chapterId}-defeat`)) return;
+    if (clipsAvailable && playClip(`${chapterId}-defeat`)) return;
     if (fallbackText) say(fallbackText, { pitch: 0.45, rate: 0.8 });
+  }
+
+  // Theme hooks
+  function setFlavor(f) { if (f && f.lead && f.bass) flavor = f; }
+  function setTauntBank(newBank, hasClips) {
+    tauntBank = newBank || null;
+    clipsAvailable = hasClips === true;
   }
 
   // ============================================================
@@ -245,7 +258,8 @@ const Sound = (() => {
 
   return {
     fx: FX, say, shutUp, bossCry, bossTaunt, bossDefeat,
-    setSfx, setVoice, isSfxOn, isVoiceOn, unlock
+    setSfx, setVoice, isSfxOn, isVoiceOn, unlock,
+    setFlavor, setTauntBank
   };
 })();
 
