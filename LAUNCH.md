@@ -1,21 +1,33 @@
 # Permit Legends — Launch Runbook
 
-Live now: https://permit-legends.vercel.app
-Repo: https://github.com/barrynapier-cloud/wasteland-drivers-academy
+LIVE NOW: https://barrynapier-cloud.github.io/wasteland-drivers-academy/
+Repo: https://github.com/barrynapier-cloud/wasteland-drivers-academy (public — required for free GitHub Pages; client code ships to browsers anyway, and codes-private.txt was never committed)
+
+Note on Vercel: the first deploy went live, then Vercel's review system
+BLOCKED all further deploys on the fresh account (state: BLOCKED via API,
+no error shown in CLI). Check vercel.com dashboard for a verification
+banner, or add a card to the account to clear it. GitHub Pages is the
+production host until then; every `git push` auto-deploys.
 
 ## Your 3 remaining clicks (approx 10 minutes total)
 
-### 1. Buy the domain ($11.25/yr)
-https://vercel.com/domains/search?q=permitlegends.com
-Buying through Vercel auto-attaches it to the permit-legends project. No DNS work.
-Optional: also grab passthepermit.com ($11.25) and redirect it here for exact-match SEO.
+### 1. Buy the domain ($11.25-12/yr)
+permitlegends.com is available. Buy it on Namecheap (you have an account)
+or via https://vercel.com/domains/search?q=permitlegends.com
+Then point DNS at GitHub Pages:
+- A records for @: 185.199.108.153, 185.199.109.153, 185.199.110.153, 185.199.111.153
+- CNAME for www: barrynapier-cloud.github.io
+Then tell Claude "attach the domain" (one API call sets it on the repo,
+GitHub provisions HTTPS automatically).
+Optional: also grab passthepermit.com and redirect it here for exact-match SEO.
 
 ### 2. Create the Stripe Payment Link ($20)
 1. Stripe Dashboard > Payment Links > New
 2. Product: "Permit Legends — Full Unlock", $20 one-time
 3. After payment: redirect to
    `https://permitlegends.com/unlock.html?code=LEGEND-CKX4-FNQA`
-   (that code is from codes-private.txt; the URL auto-unlocks the buyer's device)
+   (or the github.io URL until the domain is attached; the code is from
+   codes-private.txt and the URL auto-unlocks the buyer's device)
 4. Copy the payment link URL
 
 ### 3. Paste the link into the site
