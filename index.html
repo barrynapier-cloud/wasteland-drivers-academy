@@ -89,6 +89,10 @@
         <div><strong id="hud-sigils">0</strong><span>Sigils</span></div>
         <div><strong id="hud-streak">0</strong><span>Best Streak</span></div>
       </div>
+      <div class="hud-audio">
+        <button class="audio-toggle" id="toggle-sfx" title="Sound effects" aria-label="Toggle sound effects">🔊</button>
+        <button class="audio-toggle" id="toggle-voice" title="Demon voice" aria-label="Toggle demon voice">🗣</button>
+      </div>
       <button class="ghost-btn small" id="hud-logout">↻ Restart</button>
     </header>
 
@@ -97,9 +101,32 @@
       <p class="map-sub">Each house is a category on the written exam. Each demon is a number you must learn.</p>
       <div class="map-grid" id="map-grid"></div>
       <div class="map-cheat">
+        <button class="ghost-btn" id="open-trials">⚔ Trials of the Wastes (Quick Tests)</button>
         <button class="ghost-btn" id="open-cheat">📜 Open the Black Ledger (Cheat Sheet)</button>
       </div>
     </div>
+  </section>
+
+  <!-- ====================== SCENE: TRIALS HUB ====================== -->
+  <section class="scene" id="scene-trials">
+    <header class="ledger-hud">
+      <button class="ghost-btn small" id="trials-back">← Map</button>
+      <h2 class="ledger-title">⚔ Trials of the Wastes</h2>
+      <span style="width:64px"></span>
+    </header>
+    <p class="ledger-sub">Bite-size tests of what you've learned. No demons, no HP, just you and the numbers. Sharpen the blade between battles.</p>
+    <div class="trials-grid" id="trials-grid"></div>
+  </section>
+
+  <!-- ====================== SCENE: TRIAL RUN ====================== -->
+  <section class="scene" id="scene-trial-run">
+    <header class="quiz-hud" id="trial-run-hud"></header>
+    <div class="quiz-stage" id="trial-run-stage"></div>
+  </section>
+
+  <!-- ====================== SCENE: TRIAL RESULT ====================== -->
+  <section class="scene" id="scene-trial-result">
+    <div class="trial-result-stage" id="trial-result"></div>
   </section>
 
   <!-- ====================== SCENE: CHAPTER INTRO ====================== -->
@@ -270,9 +297,11 @@
     <p>Built from the <a href="http://www.secureyourload.com/Documents/driverguide-en.pdf" target="_blank" rel="noopener">Washington State Driver Guide</a> · RCW <a href="https://app.leg.wa.gov/RCW/default.aspx?cite=46.61.502" target="_blank" rel="noopener">46.61.502</a>, <a href="https://app.leg.wa.gov/RCW/default.aspx?cite=46.61.503" target="_blank" rel="noopener">46.61.503</a>, <a href="https://app.leg.wa.gov/RCW/default.aspx?cite=46.61.185" target="_blank" rel="noopener">46.61.185</a>, <a href="https://app.leg.wa.gov/RCW/default.aspx?cite=46.61.673" target="_blank" rel="noopener">46.61.673</a> · Distraction stats: <a href="https://www.nsc.org/" target="_blank" rel="noopener">National Safety Council</a></p>
   </footer>
 
+  <script src="audio.js"></script>
   <script src="data.js"></script>
   <script src="chapters.js"></script>
   <script src="battle-questions.js"></script>
+  <script src="quests.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

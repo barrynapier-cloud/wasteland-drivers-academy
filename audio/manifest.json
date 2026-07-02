@@ -1,0 +1,42 @@
+{
+  "voices": {
+    "blood": "c3204739-4084-41a3-9dc5-c805b307ec18",
+    "ember": "d9d5c263-f84e-4752-97b5-3750fcc6fd2f",
+    "static": "3811e986-0891-47cf-a1f5-78a1d62a547a",
+    "iron": "e5666b9c-99a2-4fac-8b4e-abee078b186d",
+    "thorn": "ca83ca7f-c186-493d-bd69-0d765fa861b2",
+    "bone": "b57b22a0-f287-405b-bc82-6f08f5e6bb1f"
+  },
+  "lines": {
+    "blood-cry": "I am the toast at every wake. Drink, and drive into my arms.",
+    "blood-taunt0": "Your blood sings my song.",
+    "blood-taunt1": "One more for the road... your last.",
+    "blood-taunt2": "Point oh eight. That is all it takes.",
+    "blood-defeat": "I was the toast at every wake. You silenced me with one number.",
+    "ember-cry": "Your eyes belong to the screen now. Look away if you dare.",
+    "ember-taunt0": "Glance at me. Just for a second.",
+    "ember-taunt1": "The notification owns you.",
+    "ember-taunt2": "Eyes off the road, little driver.",
+    "ember-defeat": "They thought I was harmless because I was legal. You showed them the difference.",
+    "static-cry": "I live in the blind spot. The child you never saw.",
+    "static-taunt0": "You did not see them.",
+    "static-taunt1": "Twenty miles an hour, and still too fast.",
+    "static-taunt2": "The crosswalk is mine.",
+    "static-defeat": "I lived inside every ping. You looked away. That was all it took.",
+    "iron-cry": "Every sign is a riddle. Read wrong, and bleed.",
+    "iron-taunt0": "You misread the iron.",
+    "iron-taunt1": "Red means stop. You did not.",
+    "iron-taunt2": "The markings betray you.",
+    "iron-defeat": "My signs were warnings. You finally listened.",
+    "thorn-cry": "Six roads cross here, and every one is mine to grant.",
+    "thorn-taunt0": "You took what was not yours.",
+    "thorn-taunt1": "Yield, or be taken.",
+    "thorn-taunt2": "First passage belongs to me.",
+    "thorn-defeat": "Every intersection was my altar. You walked through unbloodied.",
+    "bone-cry": "I keep the final ledger. Every error written in bone.",
+    "bone-taunt0": "Another mark against you.",
+    "bone-taunt1": "The ledger remembers.",
+    "bone-taunt2": "You are almost spent.",
+    "bone-defeat": "Every number in my ledger was a debt. You paid them all."
+  }
+}

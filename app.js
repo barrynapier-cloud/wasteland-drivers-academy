@@ -12,12 +12,15 @@ const player = {
   level: 1,
   bestStreak: 0,
   sigils: [],         // [{chapterId, name, icon, color}]
-  completed: {}       // { chapterId: true }
+  completed: {},      // { chapterId: true }
+  stats: {},          // { chapterId: {answered, correct} } — mastery, fed by every mode
+  mistakes: []        // [{chapterId, q}] — every miss, cleared by answering right anywhere
 };
 
 let currentChapter = null;
 let currentLessonIdx = 0;
 let lastScene = "scene-map"; // for back-from-ledger
+const revealedKeys = new Set(); // study cards whose key number has been unveiled
 
 // Quiz state
 let quizState = null;
@@ -39,6 +42,34 @@ const lessonById = (chap, id) => chap.lessons.find(l => l.id === id);
 function showScene(id) {
   document.querySelectorAll('.scene').forEach(s => s.classList.toggle('active', s.id === id));
   window.scrollTo({ top: 0, behavior: 'instant' });
+}
+
+// ---------- Learning ledger ----------
+// Every answered question in every mode flows through here.
+// Misses land in player.mistakes; a later correct answer anywhere redeems them.
+const mistakeKey = (chapterId, q) => `${chapterId}::${q.q}`;
+
+function recordAnswer(chapterId, q, isRight) {
+  if (!chapterId || !q) return;
+  const s = player.stats[chapterId] || (player.stats[chapterId] = { answered: 0, correct: 0 });
+  s.answered++;
+  if (isRight) {
+    s.correct++;
+    const key = mistakeKey(chapterId, q);
+    const idx = player.mistakes.findIndex(m => m.key === key);
+    if (idx !== -1) player.mistakes.splice(idx, 1); // redeemed
+  } else {
+    const key = mistakeKey(chapterId, q);
+    if (!player.mistakes.some(m => m.key === key)) {
+      player.mistakes.push({ key, chapterId, q });
+    }
+  }
+}
+
+function chapterMastery(chapterId) {
+  const s = player.stats[chapterId];
+  if (!s || !s.answered) return null;
+  return Math.round((s.correct / s.answered) * 100);
 }
 
 // XP / Level math
@@ -105,6 +136,7 @@ function initLogin() {
       tile.classList.add('selected');
       player.avatar = a.img;
       player.avatarMeta = a;
+      sfx('select');
       checkLoginReady();
     });
     grid.appendChild(tile);
@@ -167,12 +199,20 @@ function renderMap() {
     const isComplete = !!player.completed[c.id];
     if (!isUnlocked) tile.classList.add('locked');
     if (isComplete) tile.classList.add('completed');
+    const mastery = chapterMastery(c.id);
     tile.innerHTML = `
+      <div class="ct-demon" style="background-image:url('${esc(c.boss.image)}')"></div>
       <p class="ct-num">Chapter ${c.number}</p>
       <div class="ct-icon">${c.icon}</div>
       <h3 class="ct-title">${esc(c.title)}</h3>
       <p class="ct-sub">${esc(c.subtitle)}</p>
       <p class="ct-boss">Boss · ${esc(c.boss.name)}</p>
+      ${mastery != null ? `
+      <div class="ct-mastery" title="Accuracy across every mode">
+        <div class="ct-mastery-bar"><div class="ct-mastery-fill" style="width:${mastery}%"></div></div>
+        <span class="ct-mastery-pct">${mastery}%</span>
+      </div>` : ''}
+      ${isComplete ? '<div class="ct-seal">⛧ SEALED ⛧</div>' : ''}
     `;
     if (isUnlocked) {
       tile.addEventListener('click', () => enterChapter(c.id));
@@ -184,13 +224,39 @@ function renderMap() {
 function initMap() {
   $('hud-logout').addEventListener('click', () => {
     if (!confirm("Restart your initiation? All sigils and XP reset.")) return;
-    Object.assign(player, { name: "", avatar: null, xp: 0, level: 1, bestStreak: 0, sigils: [], completed: {} });
+    Object.assign(player, { name: "", avatar: null, xp: 0, level: 1, bestStreak: 0, sigils: [], completed: {}, stats: {}, mistakes: [] });
     $('login-name').value = "";
     document.querySelectorAll('.avatar-pick').forEach(p => p.classList.remove('selected'));
     checkLoginReady();
     showScene('scene-login');
   });
   $('open-cheat').addEventListener('click', () => openLedger('scene-map'));
+  $('open-trials').addEventListener('click', () => { sfx('ui'); Quests.openHub(); });
+  initAudioToggles();
+}
+
+// ---------- Audio helpers (safe no-ops if engine absent) ----------
+function sfx(name, arg) {
+  if (window.Sound && Sound.fx && typeof Sound.fx[name] === 'function') {
+    arg === undefined ? Sound.fx[name]() : Sound.fx[name](arg);
+  }
+}
+function initAudioToggles() {
+  const sfxBtn = $('toggle-sfx');
+  const voiceBtn = $('toggle-voice');
+  if (sfxBtn) sfxBtn.addEventListener('click', () => {
+    const on = !(window.Sound && Sound.isSfxOn());
+    if (window.Sound) Sound.setSfx(on);
+    sfxBtn.textContent = on ? '🔊' : '🔇';
+    sfxBtn.classList.toggle('off', !on);
+    if (on) sfx('ui');
+  });
+  if (voiceBtn) voiceBtn.addEventListener('click', () => {
+    const on = !(window.Sound && Sound.isVoiceOn());
+    if (window.Sound) Sound.setVoice(on);
+    voiceBtn.textContent = on ? '🗣' : '🤐';
+    voiceBtn.classList.toggle('off', !on);
+  });
 }
 
 // ============================================================
@@ -253,14 +319,19 @@ function renderLesson() {
     ? `<div class="study-art" style="background-image:url('${lesson.image}')"></div>`
     : `<div class="study-art no-art"><div class="study-art-icon">${esc(lesson.icon || c.icon)}</div></div>`;
 
+  // Active recall: the key number starts veiled. Read the label, guess the
+  // number, then tap to check yourself. Stays revealed once seen.
+  const isRevealed = revealedKeys.has(lesson.id);
+
   $('study-stage').innerHTML = `
     ${artHtml}
     <div class="study-content">
       <p class="study-eyebrow">Lesson ${currentLessonIdx + 1} · ${esc(c.title)}</p>
       <h2 class="study-title">${esc(lesson.title)}</h2>
-      <div class="study-key">
+      <div class="study-key${isRevealed ? '' : ' veiled'}" id="study-key">
         <p class="study-key-num">${esc(lesson.keyNumber)}</p>
         <p class="study-key-label">${esc(lesson.keyLabel)}</p>
+        ${isRevealed ? '' : '<button class="study-key-veil" id="study-key-veil">Guess the number — tap to unveil</button>'}
       </div>
       <p class="study-teach">${esc(lesson.teach)}</p>
       <ul class="study-remember">
@@ -268,6 +339,18 @@ function renderLesson() {
       </ul>
     </div>
   `;
+
+  if (!isRevealed) {
+    $('study-key-veil').addEventListener('click', () => {
+      revealedKeys.add(lesson.id);
+      const key = $('study-key');
+      key.classList.remove('veiled');
+      key.classList.add('unveiling');
+      const veil = $('study-key-veil');
+      if (veil) veil.remove();
+      sfx('sigil');
+    });
+  }
 
   $('study-prev').disabled = (currentLessonIdx === 0);
   $('study-next').textContent = (currentLessonIdx + 1 >= total) ? "Begin Quiz Trial →" : "Next Lesson →";
@@ -364,6 +447,7 @@ function answerQuiz(chosen, q) {
   });
 
   const isRight = (chosen === q.answer);
+  recordAnswer(quizState.chapter.id, q, isRight);
   const fb = $('quiz-feedback');
   fb.classList.remove('hidden', 'correct', 'wrong');
 
@@ -378,12 +462,15 @@ function answerQuiz(chosen, q) {
     player.xp += gained; // accrue toward level — handled at chapter complete via applyXp recalc anyway, but show responsively
     fb.classList.add('correct');
     fb.innerHTML = `<strong>Correct.</strong> ${esc(q.explain)}<br><span style="color:#6ee7b7;font-family:var(--font-mono);font-size:11px;letter-spacing:0.15em;text-transform:uppercase">+${gained} XP${bonus ? ` · Streak Bonus +${bonus}` : ''}</span>`;
+    sfx('correct');
+    if (quizState.streak >= 2) sfx('combo', quizState.streak);
     if (quizState.streak >= 3) showStreakPop(quizState.streak);
   } else {
     quizState.wrong++;
     quizState.streak = 0;
     fb.classList.add('wrong');
     fb.innerHTML = `<strong>Wrong.</strong> ${esc(q.explain)}`;
+    sfx('wrong');
   }
 
   $('quiz-streak-display').textContent = quizState.streak;
@@ -519,6 +606,9 @@ function startBattle() {
   updatePlayerHp();
   renderBattleQuestion();
   showScene('scene-battle');
+  // Demon announces itself.
+  sfx('start');
+  if (window.Sound) setTimeout(() => Sound.bossCry(c.id), 450);
 }
 
 function shuffle(arr) {
@@ -599,6 +689,7 @@ function answerBattle(chosen, q) {
   });
 
   const isRight = (chosen === q.answer);
+  recordAnswer(battleState.chapter.id, q, isRight);
   const fb = $('battle-feedback');
   fb.classList.remove('hidden', 'correct', 'wrong');
 
@@ -614,7 +705,7 @@ function answerBattle(chosen, q) {
     triggerAttack(dmg, isCrit);
     fb.classList.add('correct');
     fb.innerHTML = `<strong>Strike landed.</strong> ${esc(q.explain)}<br><span style="color:#6ee7b7;font-family:var(--font-mono);font-size:11px;letter-spacing:0.15em;text-transform:uppercase">−${dmg} HP${isCrit ? ' · CRITICAL' : ''}</span>`;
-    if (battleState.streak >= 2) showStreakPop(battleState.streak);
+    if (battleState.streak >= 2) { showStreakPop(battleState.streak); sfx('combo', battleState.streak); }
 
     $('battle-combo').textContent = `${multiplier.toFixed(2)}`;
     $('battle-streak').textContent = `streak ${battleState.streak}`;
@@ -653,6 +744,8 @@ function answerBattle(chosen, q) {
 
 // Boss claws the hero. Shake, slash, sparks, dmg popup.
 function triggerBossStrike(dmg) {
+  sfx('bossStrike');
+  if (window.Sound && battleState) setTimeout(() => Sound.bossTaunt(battleState.chapter.id), 200);
   const hero = $('battle-hero');
   const demon = $('battle-demon');
   const arena = $('battle-arena');
@@ -703,6 +796,7 @@ function triggerBossStrike(dmg) {
 }
 
 function triggerAttack(dmg, isCrit) {
+  sfx(isCrit ? 'crit' : 'slash');
   // Hero animation
   const hero = $('battle-hero');
   hero.classList.remove('attack'); void hero.offsetWidth; hero.classList.add('attack');
@@ -752,6 +846,8 @@ function endBattleVictory() {
 
   // Defeat animation
   $('battle-demon').classList.add('defeated');
+  sfx('victory');
+  if (window.Sound) setTimeout(() => Sound.bossDefeat(c.id, boss.defeatLine), 500);
 
   // Apply rewards
   const battleXp = battleState.xpThisBattle;
@@ -772,6 +868,7 @@ function endBattleVictory() {
   });
 
   setTimeout(() => {
+    if (leveled) sfx('levelup'); else sfx('sigil');
     const stage = $('victory-stage');
     stage.style.setProperty('--tc', c.color);
     stage.innerHTML = `
@@ -811,6 +908,7 @@ function endBattleVictory() {
 function endBattleDefeat() {
   const c = battleState.chapter;
   const boss = battleState.boss;
+  sfx('defeat');
   $('defeat-title').textContent = `${boss.name} cut you down.`;
   $('defeat-lede').textContent = `${boss.threat || 'The trial broke you.'} Re-read the lesson — then come back stronger.`;
   showScene('scene-defeat');
@@ -853,7 +951,7 @@ function showComplete() {
 
 function initComplete() {
   $('complete-replay').addEventListener('click', () => {
-    Object.assign(player, { xp: 0, level: 1, sigils: [], completed: {}, bestStreak: 0 });
+    Object.assign(player, { xp: 0, level: 1, sigils: [], completed: {}, bestStreak: 0, stats: {}, mistakes: [] });
     syncHud();
     renderMap();
     showScene('scene-map');
@@ -886,6 +984,50 @@ function initLedger() {
 }
 
 // ============================================================
+// KEYBOARD — A–D / 1–4 answer, Enter advances, arrows page study
+// ============================================================
+function initKeyboard() {
+  document.addEventListener('keydown', (e) => {
+    if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')) return;
+    if (e.metaKey || e.ctrlKey || e.altKey) return;
+    if ($('hint-modal').classList.contains('open')) return; // Escape handled in initHint
+    const active = document.querySelector('.scene.active');
+    if (!active) return;
+
+    // Answer with A–D or 1–4
+    const k = e.key.toLowerCase();
+    let idx = -1;
+    if (k.length === 1 && k >= 'a' && k <= 'd') idx = k.charCodeAt(0) - 97;
+    else if (k.length === 1 && k >= '1' && k <= '4') idx = Number(k) - 1;
+    if (idx >= 0) {
+      const opts = active.querySelectorAll('.quiz-option:not(:disabled), .battle-option:not(:disabled), .trial-option:not(:disabled)');
+      if (opts.length > idx) { opts[idx].click(); e.preventDefault(); }
+      return;
+    }
+
+    // Advance with Enter / Space — but a veiled key number unveils first,
+    // otherwise Enter would page past the card without the recall moment.
+    if (e.key === 'Enter' || e.key === ' ') {
+      const veil = active.querySelector('#study-key-veil');
+      if (veil) { veil.click(); e.preventDefault(); return; }
+      for (const id of ['quiz-next', 'battle-next', 'trial-next', 'study-next']) {
+        const btn = active.querySelector(`#${id}`);
+        if (btn && !btn.classList.contains('hidden') && !btn.disabled) {
+          btn.click(); e.preventDefault(); return;
+        }
+      }
+      return;
+    }
+
+    // Study paging
+    if (active.id === 'scene-study') {
+      if (e.key === 'ArrowRight') { $('study-next').click(); e.preventDefault(); }
+      else if (e.key === 'ArrowLeft' && !$('study-prev').disabled) { $('study-prev').click(); e.preventDefault(); }
+    }
+  });
+}
+
+// ============================================================
 // BOOT
 // ============================================================
 document.addEventListener('DOMContentLoaded', () => {
@@ -898,6 +1040,8 @@ document.addEventListener('DOMContentLoaded', () => {
   initDefeatScene();
   initComplete();
   initLedger();
+  if (window.Quests) Quests.init();
+  initKeyboard();
   // start on login
   showScene('scene-login');
 });
