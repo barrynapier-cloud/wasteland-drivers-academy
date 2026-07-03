@@ -25,9 +25,11 @@ Pure static HTML / CSS / JS. No framework. No build step. No localStorage (sandb
 All audio is synthesized at runtime. No asset files, no network, works offline.
 
 - **Sound effects** — Web Audio API. UI clicks, correct/wrong stings, hero slashes, critical hits, boss counterstrikes, combo risers, victory fanfare, defeat dirge, level-up, sigil shimmer, and a Rapid Fire countdown.
-- **Demon voiceovers** — pre-rendered ElevenLabs voice clips in `audio/` (30 lines, one distinct voice cast per demon). Each boss announces itself with a battle cry, taunts you on every counterstrike, and speaks its defeat line when it falls. If a clip is ever missing, the engine falls back to the browser SpeechSynthesis voice automatically, so the game still talks with no files at all.
-  - Voice casting: Blood = Vesper, Ember = Alistair, Static = Imogen, Iron = Vlad, Thorn = Elena, Bone = Sloane.
-  - `audio/manifest.json` lists every line and its voice id; re-render any line by feeding the manifest back through ElevenLabs.
+- **Full voice cast** — 212 pre-rendered ElevenLabs clips covering every character in every world. 30 bosses each get a battle cry, three strike taunts, and two defeat lines; 16 heroes each get an intro (on driver select) and a victory line. Every character has a distinct cast voice, no two colliding within a world, in a register tuned to the world (gothic opera, rogue-AI, cosmic warden, high-fantasy dragon, storybook rascal).
+  - The written cast lives in `voices.js` (source of truth for both audio and the browser-voice fallback).
+  - Clips are theme-namespaced: `audio/<theme>/<house>-cry|taunt0-2|defeat0-1.mp3` and `audio/heroes/<id>-intro|win.mp3`.
+  - `audio/manifest.json` lists every clip present; the engine plays a clip when listed and falls back to the browser SpeechSynthesis voice (same written line) otherwise, so partial rollouts never go silent.
+  - Regenerate any line by re-running its `voices.js` text through the ElevenLabs pipeline and adding the path to the manifest.
 - Two toggles in the map HUD: 🔊 sound effects and 🗣 demon voice. Audio unlocks on first interaction (browser autoplay policy).
 
 ## Trials of the Wastes (quick tests)
