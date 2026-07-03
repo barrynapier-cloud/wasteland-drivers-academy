@@ -22,6 +22,19 @@ const THEMES = {
     tagline: 'Six demons guard the Washington roads.',
     pitch: 'Goth-anime demon-slaying. The original.',
     icon: '⛧',
+    mark: '⛧',
+    font: '"Cinzel", serif',
+    lessonIconPool: null, // wasteland keeps each lesson's own icon
+    terms: {
+      begin: 'Begin the Initiation →', introEyebrow: 'FIRST INVOCATION',
+      trialsBtn: '⚔ Trials of the Wastes (Quick Tests)', ledgerBtn: '📜 Open the Black Ledger (Cheat Sheet)',
+      hubName: '⚔ Trials of the Wastes', hubSub: 'Bite-size tests of what you\'ve learned. No demons, no HP, just you and the numbers. Sharpen the blade between battles.',
+      ledgerName: '📜 The Black Ledger', ledgerSub: 'Every number Washington traffic law demands you memorize. Burn it into your skull.',
+      trialWord: 'Trial', strikeNoun: 'Strike', strikeAgain: 'Strike Again →', bossAwait: '☠ Demon awaiting',
+      defeatEyebrow: 'YOU FELL', defeatVerb: 'cut you down.',
+      completeEyebrow: 'INITIATION COMPLETE', completeTitle: 'You Survived the Six Houses',
+      completeLede: 'Six demons fallen. Six sigils claimed. The road is yours now. Walk into the DOL and take it.'
+    },
     brand: { eyebrow: '⛧ SANRIO ✕ SANCTUM ⛧', mapTitle: 'The Six Houses', mapSub: 'Each house is a category on the written exam. Each demon is a number you must learn.' },
     palette: {}, // baseline — styles.css defaults
     flavor: 'gothic',
@@ -71,6 +84,19 @@ const THEMES = {
     tagline: 'Six rogue AIs corrupted the traffic grid.',
     pitch: 'Cyberpunk 2099. Hack the grid, defrag the bosses.',
     icon: '⌁',
+    mark: '⌁',
+    font: '"Orbitron", sans-serif',
+    lessonIconPool: ['⌁', '▣', '◉', '◈', '⬢', '⚡', '🤖', '💾'],
+    terms: {
+      begin: 'Jack In →', introEyebrow: 'BOOT SEQUENCE',
+      trialsBtn: '⌁ Training Protocols (Quick Tests)', ledgerBtn: '▣ Open the Root Index (Cheat Sheet)',
+      hubName: '⌁ Training Protocols', hubSub: 'Bite-size drills. No bosses, no HP, just raw recall. Overclock your memory between sectors.',
+      ledgerName: '▣ The Root Index', ledgerSub: 'Every number the grid demands. Cache them in wetware.',
+      trialWord: 'Protocol', strikeNoun: 'Cycle', strikeAgain: 'Execute Again →', bossAwait: '⚠ Rogue AI detected',
+      defeatEyebrow: 'CONNECTION LOST', defeatVerb: 'crashed your run.',
+      completeEyebrow: 'ROOT ACCESS GRANTED', completeTitle: 'You Defragged All Six Sectors',
+      completeLede: 'Six rogue AIs deleted. The grid runs clean. Walk into the DOL and compile your license.'
+    },
     brand: { eyebrow: '⌁ NEO-CASCADIA GRID AUTHORITY ⌁', mapTitle: 'The Six Sectors', mapSub: 'Each sector is a category on the written exam. Each rogue AI is a number you must learn.' },
     palette: {
       '--oxblood': '#020617', '--oxblood-2': '#0f172a', '--crimson': '#0e7490',
@@ -125,6 +151,19 @@ const THEMES = {
     tagline: 'Six rogue planets block your flight path.',
     pitch: 'Space cadet school. Clear the planets, earn your wings.',
     icon: '✦',
+    mark: '✦',
+    font: '"Exo 2", sans-serif',
+    lessonIconPool: ['✦', '☄', '🛰', '🪐', '✧', '☽', '🌌', '🚀'],
+    terms: {
+      begin: 'Launch →', introEyebrow: 'PREFLIGHT BRIEFING',
+      trialsBtn: '✦ Simulation Deck (Quick Tests)', ledgerBtn: '☽ Open the Navigator\'s Codex (Cheat Sheet)',
+      hubName: '✦ Simulation Deck', hubSub: 'Short sims. No wardens, no hull damage, just you and the numbers. Calibrate between planets.',
+      ledgerName: '☽ The Navigator\'s Codex', ledgerSub: 'Every number the Bureau demands. Chart them before the final orbit.',
+      trialWord: 'Sim', strikeNoun: 'Pass', strikeAgain: 'Fire Again →', bossAwait: '☄ Warden ahead',
+      defeatEyebrow: 'EJECTED', defeatVerb: 'sent you drifting.',
+      completeEyebrow: 'WINGS GRANTED', completeTitle: 'You Cleared All Six Planets',
+      completeLede: 'Six wardens becalmed. The corridor is open. Walk into the DOL and claim your wings.'
+    },
     brand: { eyebrow: '✦ INTERSTELLAR LICENSE BUREAU ✦', mapTitle: 'The Six Planets', mapSub: 'Each planet is a category on the written exam. Each warden is a number you must learn.' },
     palette: {
       '--oxblood': '#030014', '--oxblood-2': '#0b0530', '--crimson': '#312e81',
@@ -179,6 +218,19 @@ const THEMES = {
     tagline: 'Six cursed roads. One Rider\'s Oath.',
     pitch: 'High fantasy. Lift the curses, earn your knighthood.',
     icon: '⚔',
+    mark: '❖',
+    font: '"Cinzel", serif',
+    lessonIconPool: ['⚔', '🛡', '🐉', '📜', '🕯', '🏰', '⚜', '🗝'],
+    terms: {
+      begin: 'Take the Oath →', introEyebrow: 'THE SUMMONS',
+      trialsBtn: '⚔ The Proving Grounds (Quick Tests)', ledgerBtn: '📜 Open the Rune Codex (Cheat Sheet)',
+      hubName: '⚔ The Proving Grounds', hubSub: 'Small trials. No dragons, no wounds, just you and the numbers. Whet the blade between roads.',
+      ledgerName: '📜 The Rune Codex', ledgerSub: 'Every number the old roads demand. Carve them into memory.',
+      trialWord: 'Riddle', strikeNoun: 'Strike', strikeAgain: 'Strike Again →', bossAwait: '🐉 Dragon ahead',
+      defeatEyebrow: 'UNHORSED', defeatVerb: 'bested you.',
+      completeEyebrow: 'THE OATH IS SWORN', completeTitle: 'You Lifted All Six Curses',
+      completeLede: 'Six dragons appeased. The roads run free. Ride to the DOL and swear the final oath.'
+    },
     brand: { eyebrow: '⚔ THE RIDER\'S OATH ⚔', mapTitle: 'The Six Roads', mapSub: 'Each road is a category on the written exam. Each curse is a number you must learn.' },
     palette: {
       '--oxblood': '#1a1408', '--oxblood-2': '#292007', '--crimson': '#78350f',
@@ -234,6 +286,19 @@ const THEMES = {
     tagline: 'The critters scrambled Maple Grove\'s road rules.',
     pitch: 'Cozy pastel town. Out-quiz the critters, earn your Cruise Badge.',
     icon: '🍁',
+    mark: '✿',
+    font: '"Baloo 2", cursive',
+    lessonIconPool: ['🍁', '🍯', '🌼', '🫖', '🍄', '🐾', '🌰', '🧺'],
+    terms: {
+      begin: 'Start the Adventure →', introEyebrow: 'WELCOME TO MAPLE GROVE',
+      trialsBtn: '🍯 The Practice Meadow (Quick Tests)', ledgerBtn: '📖 Open the Big Book (Cheat Sheet)',
+      hubName: '🍯 The Practice Meadow', hubSub: 'Quick friendly quizzes. No troublemakers, no pressure, just you and the numbers. Stretch your brain between chapters.',
+      ledgerName: '📖 The Big Book of Road Rules', ledgerSub: 'Every number Maple Grove needs you to know. Tuck them in snug.',
+      trialWord: 'Quiz', strikeNoun: 'Round', strikeAgain: 'Try Another →', bossAwait: '🙈 Troublemaker ahead',
+      defeatEyebrow: 'OOPSIE', defeatVerb: 'out-quizzed you this time.',
+      completeEyebrow: 'CRUISE BADGE EARNED', completeTitle: 'You Helped All Six Troublemakers',
+      completeLede: 'Six critters set right. Maple Grove drives happy again. Trot into the DOL and collect the real badge.'
+    },
     brand: { eyebrow: '🍁 MAPLE GROVE DRIVING CLUB 🍁', mapTitle: 'The Six Troublemakers', mapSub: 'Each troublemaker is a category on the written exam. Each one guards a number you must learn.' },
     palette: {
       '--oxblood': '#1c1410', '--oxblood-2': '#2b1d14', '--crimson': '#9a3412',
@@ -295,6 +360,7 @@ let activeTheme = null;
 function applyTheme(themeId) {
   const t = THEMES[themeId] || THEMES.wasteland;
   activeTheme = t;
+  window.activeTheme = t;
 
   // 1. Reskin chapters
   CHAPTERS.forEach(c => {
@@ -341,6 +407,28 @@ function applyTheme(themeId) {
   const mapSub = document.querySelector('.map-sub');
   if (mapTitle) mapTitle.textContent = t.brand.mapTitle;
   if (mapSub) mapSub.textContent = t.brand.mapSub;
+
+  // 6. World identity: mark glyph, display font, scene chrome
+  window.THEME_UI = { mark: t.mark || '⛧', terms: t.terms || THEMES.wasteland.terms };
+  document.body.dataset.theme = t.id;
+  root.style.setProperty('--font-display', t.font || '"Cinzel", serif');
+  const terms = window.THEME_UI.terms;
+  const mark = window.THEME_UI.mark;
+  const setText = (sel, txt) => document.querySelectorAll(sel).forEach(e => { e.textContent = txt; });
+  setText('#login-start', terms.begin);
+  setText('#open-trials', terms.trialsBtn);
+  setText('#open-cheat', terms.ledgerBtn);
+  setText('#trials-title', terms.hubName);
+  setText('#trials-sub', terms.hubSub);
+  setText('#ledger-title', terms.ledgerName);
+  setText('#ledger-sub', terms.ledgerSub);
+  setText('.vs-mark', mark);
+  setText('#battle-next', terms.strikeAgain);
+  setText('#scene-intro .eyebrow', `${mark} ${terms.introEyebrow} ${mark}`);
+  setText('.defeat-eyebrow', `${mark} ${terms.defeatEyebrow} ${mark}`);
+  setText('#scene-complete .eyebrow', `${mark} ${terms.completeEyebrow} ${mark}`);
+  setText('.complete-title', terms.completeTitle);
+  setText('.complete-lede', terms.completeLede);
 
   return t;
 }

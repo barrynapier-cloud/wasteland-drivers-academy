@@ -2576,3 +2576,100 @@ html, body {
   color: var(--ink-dim);
   text-align: center;
 }
+
+/* ============================================================
+   PER-WORLD CARD DESIGN SYSTEMS
+   Wasteland is the baseline above. Each world reshapes the same
+   surfaces: corner geometry, border language, texture.
+   ============================================================ */
+
+/* ---- NEON CIRCUIT: terminal panels, sharp corners, scanlines ---- */
+body[data-theme="neon"] .login-card, body[data-theme="neon"] .intro-card,
+body[data-theme="neon"] .chapter-tile, body[data-theme="neon"] .study-art,
+body[data-theme="neon"] .study-key, body[data-theme="neon"] .quiz-option,
+body[data-theme="neon"] .battle-option, body[data-theme="neon"] .trial-option,
+body[data-theme="neon"] .trial-card, body[data-theme="neon"] .hint-card,
+body[data-theme="neon"] .ledger-card, body[data-theme="neon"] .how-step,
+body[data-theme="neon"] .ci-boss-card, body[data-theme="neon"] .adventure-pick,
+body[data-theme="neon"] .avatar-pick, body[data-theme="neon"] .resume-banner {
+  border-radius: 4px;
+  border-color: rgba(0, 240, 255, 0.35);
+}
+body[data-theme="neon"] .quiz-feedback, body[data-theme="neon"] .battle-feedback,
+body[data-theme="neon"] .trial-feedback { border-radius: 0 4px 4px 0; }
+body[data-theme="neon"] .primary-btn, body[data-theme="neon"] .ghost-btn,
+body[data-theme="neon"] .trial-chip, body[data-theme="neon"] .audio-toggle { border-radius: 4px; }
+body[data-theme="neon"] .study-art { position: relative; }
+body[data-theme="neon"] .study-art::after {
+  content: ""; position: absolute; inset: 0; pointer-events: none;
+  background: repeating-linear-gradient(0deg, rgba(0,240,255,0.05) 0 1px, transparent 1px 4px);
+}
+body[data-theme="neon"] .study-key {
+  background: linear-gradient(135deg, rgba(6,182,212,0.16), rgba(139,92,246,0.14));
+  border: 1px solid rgba(0,240,255,0.4);
+}
+body[data-theme="neon"] .study-key-num { text-shadow: 0 0 18px rgba(0,240,255,0.8); }
+
+/* ---- STARBOUND: observatory glass, wide radii, starfield ---- */
+body[data-theme="cosmic"] .login-card, body[data-theme="cosmic"] .intro-card,
+body[data-theme="cosmic"] .chapter-tile, body[data-theme="cosmic"] .study-art,
+body[data-theme="cosmic"] .study-key, body[data-theme="cosmic"] .trial-card,
+body[data-theme="cosmic"] .hint-card, body[data-theme="cosmic"] .ledger-card,
+body[data-theme="cosmic"] .how-step, body[data-theme="cosmic"] .ci-boss-card,
+body[data-theme="cosmic"] .adventure-pick, body[data-theme="cosmic"] .resume-banner {
+  border-radius: 26px;
+  border-color: rgba(167, 139, 250, 0.35);
+  background-image: radial-gradient(circle at 18% 22%, rgba(255,255,255,0.05) 0 1px, transparent 2px),
+                    radial-gradient(circle at 76% 64%, rgba(255,255,255,0.05) 0 1px, transparent 2px),
+                    radial-gradient(circle at 52% 88%, rgba(255,255,255,0.04) 0 1px, transparent 2px);
+}
+body[data-theme="cosmic"] .quiz-option, body[data-theme="cosmic"] .battle-option,
+body[data-theme="cosmic"] .trial-option { border-radius: 999px; padding-left: 24px; }
+body[data-theme="cosmic"] .study-key {
+  background: linear-gradient(135deg, rgba(99,102,241,0.2), rgba(56,189,248,0.12));
+  border: 1px solid rgba(167,139,250,0.45);
+}
+
+/* ---- REALM OF ROADS: parchment plates, double borders ---- */
+body[data-theme="realm"] .login-card, body[data-theme="realm"] .intro-card,
+body[data-theme="realm"] .chapter-tile, body[data-theme="realm"] .study-art,
+body[data-theme="realm"] .study-key, body[data-theme="realm"] .quiz-option,
+body[data-theme="realm"] .battle-option, body[data-theme="realm"] .trial-option,
+body[data-theme="realm"] .trial-card, body[data-theme="realm"] .hint-card,
+body[data-theme="realm"] .ledger-card, body[data-theme="realm"] .how-step,
+body[data-theme="realm"] .ci-boss-card, body[data-theme="realm"] .adventure-pick,
+body[data-theme="realm"] .avatar-pick, body[data-theme="realm"] .resume-banner {
+  border-radius: 10px;
+  border-style: double;
+  border-width: 3px;
+  border-color: rgba(251, 191, 36, 0.4);
+}
+body[data-theme="realm"] .study-key {
+  background: linear-gradient(135deg, rgba(180,83,9,0.25), rgba(101,163,13,0.12));
+  border: 3px double rgba(251,191,36,0.55);
+}
+body[data-theme="realm"] .chapter-tile,
+body[data-theme="realm"] .study-art {
+  background-image: linear-gradient(180deg, rgba(251,191,36,0.05), rgba(0,0,0,0));
+}
+
+/* ---- CRUISE CRITTERS: storybook paper, chunky soft corners ---- */
+body[data-theme="cozy"] .login-card, body[data-theme="cozy"] .intro-card,
+body[data-theme="cozy"] .chapter-tile, body[data-theme="cozy"] .study-art,
+body[data-theme="cozy"] .study-key, body[data-theme="cozy"] .quiz-option,
+body[data-theme="cozy"] .battle-option, body[data-theme="cozy"] .trial-option,
+body[data-theme="cozy"] .trial-card, body[data-theme="cozy"] .hint-card,
+body[data-theme="cozy"] .ledger-card, body[data-theme="cozy"] .how-step,
+body[data-theme="cozy"] .ci-boss-card, body[data-theme="cozy"] .adventure-pick,
+body[data-theme="cozy"] .avatar-pick, body[data-theme="cozy"] .resume-banner {
+  border-radius: 28px;
+  border-width: 2px;
+  border-color: rgba(253, 164, 175, 0.45);
+}
+body[data-theme="cozy"] .quiz-option, body[data-theme="cozy"] .battle-option,
+body[data-theme="cozy"] .trial-option { border-radius: 18px; font-weight: 600; }
+body[data-theme="cozy"] .study-key {
+  background: linear-gradient(135deg, rgba(234,88,12,0.18), rgba(45,212,191,0.12));
+  border: 2px solid rgba(253,164,175,0.5);
+}
+body[data-theme="cozy"] .study-key-num { text-shadow: 0 0 14px rgba(253,164,175,0.7); }

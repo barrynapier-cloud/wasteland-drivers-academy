@@ -100,6 +100,41 @@ function chapterMastery(chapterId) {
   return Math.round((s.correct / s.answered) * 100);
 }
 
+// Theme UI lookups — safe defaults if themes.js has not applied yet
+function tmark() { return (window.THEME_UI && THEME_UI.mark) || '\u26e7'; }
+function tterm(key, fallback) { return (window.THEME_UI && THEME_UI.terms && THEME_UI.terms[key]) || fallback; }
+
+// Themed lesson visuals. The fact text is shared; the card art is not.
+// Outside Wasteland: goth illustrations are replaced by that world's
+// hero card (first illustrated lesson of the chapter) or a themed icon;
+// regulatory sign lessons swap to the plain sign graphic so the sign
+// itself is always taught accurately.
+const REGULATORY_SIGN_MAP = {
+  'images/stop.png': 'images/sign-stop.png',
+  'images/yield.png': 'images/sign-yield.png',
+  'images/warning.png': 'images/sign-warning.png'
+};
+function themedLessonView(chapter, lesson, lessonIdx) {
+  const th = window.activeTheme;
+  if (!th || th.id === 'wasteland') {
+    return { image: lesson.image, icon: lesson.icon || chapter.icon };
+  }
+  let image = lesson.image;
+  if (image && REGULATORY_SIGN_MAP[image]) {
+    image = REGULATORY_SIGN_MAP[image];
+  } else if (image) {
+    // First illustrated lesson of the chapter carries the world's hero card
+    const firstArtIdx = chapter.lessons.findIndex(l => l.image && !REGULATORY_SIGN_MAP[l.image]);
+    image = (lessonIdx === firstArtIdx) ? `images/themes/${th.id}/lesson-${chapter.id}.jpg` : null;
+  }
+  const pool = th.lessonIconPool;
+  const houseIdx = CHAPTERS.findIndex(x => x.id === chapter.id);
+  const icon = (pool && pool.length)
+    ? pool[(houseIdx * 5 + lessonIdx) % pool.length]
+    : chapter.icon;
+  return { image, icon };
+}
+
 // XP / Level math
 function xpForLevel(lv) { return 100 + (lv - 1) * 60; }
 function applyXp(amount) {
@@ -328,7 +363,7 @@ function renderMap() {
         <div class="ct-mastery-bar"><div class="ct-mastery-fill" style="width:${mastery}%"></div></div>
         <span class="ct-mastery-pct">${mastery}%</span>
       </div>` : ''}
-      ${isComplete ? '<div class="ct-seal">⛧ SEALED ⛧</div>' : ''}
+      ${isComplete ? `<div class="ct-seal">${tmark()} SEALED ${tmark()}</div>` : ''}
     `;
     if (isUnlocked) {
       tile.addEventListener('click', () => enterChapter(c.id));
@@ -390,14 +425,14 @@ function enterChapter(id) {
   wrap.style.setProperty('--tc', c.color);
   wrap.innerHTML = `
     <div class="ci-icon">${c.icon}</div>
-    <p class="eyebrow">⛧ Chapter ${c.number} ⛧</p>
+    <p class="eyebrow">${tmark()} Chapter ${c.number} ${tmark()}</p>
     <h2 class="ci-title">${esc(c.title)}</h2>
     <p class="ci-sub">${esc(c.subtitle)}</p>
     <p class="ci-intro-text">${esc(c.intro)}</p>
     <div class="ci-boss-card">
       <img class="ci-boss-img" src="${esc(c.boss.image)}" alt="" onerror="this.style.display='none'" />
       <div class="ci-boss-meta">
-        <p class="ci-boss-label">☠ Demon awaiting</p>
+        <p class="ci-boss-label">${tterm('bossAwait','☠ Demon awaiting')}</p>
         <p class="ci-boss-name">${esc(c.boss.name)}</p>
         <p class="ci-boss-reward">Reward · ${esc(c.boss.reward)}</p>
       </div>
@@ -435,9 +470,10 @@ function renderLesson() {
   $('study-bar-fill').style.width = `${((currentLessonIdx + 1) / total) * 100}%`;
   $('study-chapter').textContent = `${c.icon} ${c.title}`;
 
-  const artHtml = lesson.image
-    ? `<div class="study-art" style="background-image:url('${lesson.image}')"></div>`
-    : `<div class="study-art no-art"><div class="study-art-icon">${esc(lesson.icon || c.icon)}</div></div>`;
+  const view = themedLessonView(c, lesson, currentLessonIdx);
+  const artHtml = view.image
+    ? `<div class="study-art" style="background-image:url('${view.image}')"></div>`
+    : `<div class="study-art no-art"><div class="study-art-icon">${esc(view.icon)}</div></div>`;
 
   // Active recall: the key number starts veiled. Read the label, guess the
   // number, then tap to check yourself. Stays revealed once seen.
@@ -523,7 +559,7 @@ function renderQuizQuestion() {
   const signBlock = q.signImage
     ? `<div class="q-sign">
          <img src="${q.signImage}" alt="${esc(q.signLabel || 'sign')}" />
-         <p class="q-sign-label">⛧ ${esc(q.signLabel || 'Sign')} ⛧</p>
+         <p class="q-sign-label">${tmark()} ${esc(q.signLabel || 'Sign')} ${tmark()}</p>
        </div>`
     : '';
 
@@ -534,7 +570,7 @@ function renderQuizQuestion() {
     : '';
 
   $('quiz-stage').innerHTML = `
-    <p class="quiz-topic">⛧ ${esc(quizState.chapter.title)} · Trial ${quizState.index + 1} ⛧</p>
+    <p class="quiz-topic">${tmark()} ${esc(quizState.chapter.title)} · ${tterm('trialWord','Trial')} ${quizState.index + 1} ${tmark()}</p>
     ${signBlock}
     <p class="quiz-q">${esc(q.q)}</p>
     ${hintBtn}
@@ -640,9 +676,10 @@ function openHint(chapter, lessonId, triggerId) {
   // Clear everything except the close button
   Array.from(card.children).forEach(child => { if (child !== closeBtn) child.remove(); });
 
-  const artHtml = lesson.image
-    ? `<div class="hint-art" style="background-image:url('${lesson.image}')"></div>`
-    : `<div class="hint-art no-art">${esc(lesson.icon || chapter.icon)}</div>`;
+  const hintView = themedLessonView(chapter, lesson, chapter.lessons.indexOf(lesson));
+  const artHtml = hintView.image
+    ? `<div class="hint-art" style="background-image:url('${hintView.image}')"></div>`
+    : `<div class="hint-art no-art">${esc(hintView.icon)}</div>`;
 
   const content = document.createElement('div');
   content.innerHTML = `
@@ -760,7 +797,7 @@ function renderBattleQuestion() {
   const existing = document.querySelector('.battle-stage-sign');
   if (existing) existing.remove();
 
-  $('battle-topic').textContent = `⛧ ${battleState.boss.threat} · Strike ${battleState.qIdx + 1} ⛧`;
+  $('battle-topic').textContent = `${tmark()} ${battleState.boss.threat} · ${tterm('strikeNoun','Strike')} ${battleState.qIdx + 1} ${tmark()}`;
   $('battle-q').textContent = q.q;
   $('battle-feedback').classList.add('hidden');
   $('battle-feedback').innerHTML = '';
@@ -997,7 +1034,7 @@ function endBattleVictory() {
         <div class="victory-rays"></div>
         <div class="victory-sigil">${c.icon}</div>
       </div>
-      <p class="eyebrow">⛧ House of ${esc(c.title.replace('House of ',''))} · Cleared ⛧</p>
+      <p class="eyebrow">${tmark()} ${esc(c.title)} · Cleared ${tmark()}</p>
       <h2 class="victory-title">${esc(boss.reward)} Earned</h2>
       <p class="victory-line">"${esc(boss.defeatLine)}"<br><span style="color:var(--pink);font-style:normal;font-family:var(--font-mono);font-size:11px;letter-spacing:0.2em">— ${esc(boss.name)}, vanquished</span></p>
       <div class="victory-rewards">
@@ -1029,7 +1066,7 @@ function endBattleDefeat() {
   const c = battleState.chapter;
   const boss = battleState.boss;
   sfx('defeat');
-  $('defeat-title').textContent = `${boss.name} cut you down.`;
+  $('defeat-title').textContent = `${boss.name} ${tterm('defeatVerb','cut you down.')}`;
   $('defeat-lede').textContent = `${boss.threat || 'The trial broke you.'} Re-read the lesson — then come back stronger.`;
   showScene('scene-defeat');
 }

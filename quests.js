@@ -253,7 +253,7 @@ const Quests = (() => {
     document.getElementById('trial-quit').addEventListener('click', quit);
 
     const signBlock = item.signImage
-      ? `<div class="q-sign"><img src="${item.signImage}" alt="${esc(item.signLabel || 'sign')}" /><p class="q-sign-label">⛧ ${esc(item.signLabel || 'Sign')} ⛧</p></div>`
+      ? `<div class="q-sign"><img src="${item.signImage}" alt="${esc(item.signLabel || 'sign')}" /><p class="q-sign-label">${tmark()} ${esc(item.signLabel || 'Sign')} ${tmark()}</p></div>`
       : '';
     const tag = { rapid: 'Rapid Fire', pop: `${esc(q.chapterTitle || '')} · Pop Quiz`, redeem: 'Trial of Redemption', exam: 'The Final Reckoning' }[q.mode];
     // Cross-house modes show which house the question belongs to — it tells
@@ -261,7 +261,7 @@ const Quests = (() => {
     const chip = (q.mode !== 'pop' && item.chapterId) ? houseChip(item.chapterId) : '';
 
     stage.innerHTML = `
-      <p class="trial-run-topic">⛧ ${tag} ⛧</p>
+      <p class="trial-run-topic">${tmark()} ${tag} ${tmark()}</p>
       ${chip ? `<div class="trial-house-row">${chip}</div>` : ''}
       ${signBlock}
       <p class="trial-q">${esc(item.q)}</p>
@@ -386,7 +386,7 @@ const Quests = (() => {
         <div><strong>${q.bestStreak}</strong><span>Best Streak</span></div>
         <div><strong>+${xp}</strong><span>XP</span></div>
       </div>
-      <p class="trial-result-foot">${q.score >= best.rapid ? '⛧ New session best ⛧' : `Session best · ${best.rapid}`}</p>
+      <p class="trial-result-foot">${q.score >= best.rapid ? `${tmark()} New session best ${tmark()}` : `Session best · ${best.rapid}`}</p>
       <div class="trial-result-actions">
         <button class="primary-btn" id="trial-again">Run Again ↺</button>
         <button class="ghost-btn" id="trial-hub">← Trials</button>
@@ -408,7 +408,7 @@ const Quests = (() => {
     document.getElementById('trial-result').innerHTML = `
       <p class="eyebrow" style="color:${q.color}">📖 ${esc(q.chapterTitle)} · Pop Quiz</p>
       <h2 class="trial-result-title">${q.correct} / ${total}</h2>
-      <p class="trial-result-grade">${passed ? '⛧ The lesson holds ⛧' : 'Re-read the house. The numbers slipped.'}</p>
+      <p class="trial-result-grade">${passed ? `${tmark()} The lesson holds ${tmark()}` : 'Re-read the chapter. The numbers slipped.'}</p>
       <div class="trial-result-stats">
         <div><strong>${Math.round((q.correct / total) * 100)}%</strong><span>Score</span></div>
         <div><strong>${q.bestStreak}</strong><span>Best Streak</span></div>
@@ -437,7 +437,7 @@ const Quests = (() => {
       <p class="eyebrow" style="color:#6ee7b7">⚰️ Trial of Redemption</p>
       <h2 class="trial-result-title">${redeemed} / ${drilled} redeemed</h2>
       <p class="trial-result-grade">${clean
-        ? '⛧ The ledger is clean. Nothing haunts you. ⛧'
+        ? `${tmark()} The ledger is clean. Nothing haunts you. ${tmark()}`
         : `${remaining} mark${remaining === 1 ? '' : 's'} still against you. Return and atone.`}</p>
       <div class="trial-result-stats">
         <div><strong>${redeemed}</strong><span>Erased</span></div>
@@ -481,7 +481,7 @@ const Quests = (() => {
       <p class="eyebrow" style="color:#fff7eb">🕯 The Final Reckoning</p>
       <h2 class="trial-result-title">${pct}%</h2>
       <p class="trial-result-grade">${passed
-        ? '⛧ VERDICT: PASS — you would survive the DOL. ⛧'
+        ? `${tmark()} VERDICT: PASS. You would survive the DOL. ${tmark()}`
         : `VERDICT: FALL — the real exam demands 80%. You scored ${pct}%.`}</p>
       <div class="exam-breakdown">${breakdown}</div>
       ${weakest && weakest.pct < 100 ? `<p class="trial-result-foot">Weakest house · <strong style="color:${weakest.c.color}">${esc(weakest.c.title)}</strong> — re-study it, then atone.</p>` : ''}
