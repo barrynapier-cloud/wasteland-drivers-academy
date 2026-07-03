@@ -1,6 +1,6 @@
 # Permit Legends — Launch Runbook
 
-LIVE NOW: https://barrynapier-cloud.github.io/wasteland-drivers-academy/
+LIVE NOW: https://permitlegends.com (custom domain, HTTPS enforced; github.io URL still works)
 Repo: https://github.com/barrynapier-cloud/wasteland-drivers-academy (public — required for free GitHub Pages; client code ships to browsers anyway, and codes-private.txt was never committed)
 
 Note on Vercel: the first deploy went live, then Vercel's review system
@@ -11,15 +11,10 @@ production host until then; every `git push` auto-deploys.
 
 ## Your 3 remaining clicks (approx 10 minutes total)
 
-### 1. Buy the domain ($11.25-12/yr)
-permitlegends.com is available. Buy it on Namecheap (you have an account)
-or via https://vercel.com/domains/search?q=permitlegends.com
-Then point DNS at GitHub Pages:
-- A records for @: 185.199.108.153, 185.199.109.153, 185.199.110.153, 185.199.111.153
-- CNAME for www: barrynapier-cloud.github.io
-Then tell Claude "attach the domain" (one API call sets it on the repo,
-GitHub provisions HTTPS automatically).
-Optional: also grab passthepermit.com and redirect it here for exact-match SEO.
+### 1. Domain — DONE (2026-07-02)
+permitlegends.com purchased on Namecheap, DNS pointed at GitHub Pages
+(4 A records + www CNAME), custom domain attached to the repo, HTTPS
+certificate issued and enforced. www redirects to the apex.
 
 ### 2. Create the Stripe Payment Link ($20)
 1. Stripe Dashboard > Payment Links > New
