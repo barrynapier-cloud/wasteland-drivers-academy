@@ -140,6 +140,14 @@ const AVATARS = [
     body: "Soft · Curvy",
     tagline: "The road is a circle and I am at its center.",
     lore: "Tarot-reading roadside witch. Sees the right-of-way as fate. Reads bumpers, signs, and weather like cards on a velvet cloth."
+  },
+  {
+    id: "silas",
+    img: "images/avatar-4.png",
+    name: "Silas Mourne",
+    body: "Lean · Sharp",
+    tagline: "Every wreck was once a wrong answer.",
+    lore: "Graveyard-shift tow truck kid. Has hauled a hundred wrecks off the county roads and remembers the mistake behind every one. Drives like he refuses to become cargo."
   }
 ];
 

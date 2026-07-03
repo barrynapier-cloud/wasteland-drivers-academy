@@ -29,7 +29,8 @@ const THEMES = {
     avatars: [
       { id: 'vex', img: 'images/avatar-1.png', name: 'Vex Halloran', body: 'Petite · Wiry', tagline: 'Speed is grace.', lore: 'Dead-mall bike messenger. Knows every alley, every shortcut, every cracked sign in the city. Reads the road like sheet music.' },
       { id: 'mira', img: 'images/avatar-2.png', name: 'Mira Korvus', body: 'Tall · Athletic', tagline: 'Discipline is the only prayer.', lore: 'Church-choir runaway turned trail-runner. Counts mile markers like rosary beads. Brakes late, signals early, never panics.' },
-      { id: 'saoirse', img: 'images/avatar-3.png', name: 'Saoirse Veil', body: 'Soft · Curvy', tagline: 'The road is a circle and I am at its center.', lore: 'Tarot-reading roadside witch. Sees the right-of-way as fate. Reads bumpers, signs, and weather like cards on a velvet cloth.' }
+      { id: 'saoirse', img: 'images/avatar-3.png', name: 'Saoirse Veil', body: 'Soft · Curvy', tagline: 'The road is a circle and I am at its center.', lore: 'Tarot-reading roadside witch. Sees the right-of-way as fate. Reads bumpers, signs, and weather like cards on a velvet cloth.' },
+      { id: 'silas', img: 'images/avatar-4.png', name: 'Silas Mourne', body: 'Lean · Sharp', tagline: 'Every wreck was once a wrong answer.', lore: 'Graveyard-shift tow truck kid. Has hauled a hundred wrecks off the county roads and remembers the mistake behind every one. Drives like he refuses to become cargo.' }
     ],
     origin: 'Before the highways, the land was held by six old houses. When the asphalt came, the houses didn\'t leave. They crawled into the rules. Now every law in the Washington Driver Guide is a wall, and behind each wall waits a demon who profits when you fail.',
     houses: {

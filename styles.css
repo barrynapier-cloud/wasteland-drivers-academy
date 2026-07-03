@@ -233,6 +233,12 @@ html, body {
   max-width: 620px;
   margin: 8px 0 18px;
 }
+/* Worlds with a 4th driver spread 2x2 so nobody rides alone */
+.avatar-grid:has(> :nth-child(4)) { grid-template-columns: repeat(2, 1fr); max-width: 480px; }
+@media (min-width: 760px) {
+  .avatar-grid:has(> :nth-child(4)) { grid-template-columns: repeat(4, 1fr); max-width: 720px; }
+}
+
 .avatar-pick {
   position: relative;
   aspect-ratio: 3 / 4.4;
