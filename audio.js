@@ -233,9 +233,10 @@ const Sound = (() => {
   // the normal browser voice (not the deep villain voice).
   function heroVoice(heroId, kind) {
     if (!heroId) return;
-    if (playClip(`heroes/${heroId}-${kind}`)) return;
     const cast = (window.VOICE_CAST && VOICE_CAST.heroes && VOICE_CAST.heroes[heroId]) || null;
     const line = cast && cast[kind];
+    if (line) { try { if (window.PL_onHeroSpeak) window.PL_onHeroSpeak(line); } catch (e) {} }
+    if (playClip(`heroes/${heroId}-${kind}`)) return;
     if (line) say(line, { pitch: 1.0, rate: 1.0, deep: false });
   }
 

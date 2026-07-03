@@ -956,17 +956,18 @@ function triggerBossStrike(dmg) {
 // Boss speech bubble — shows the spoken line on the battle stage so the
 // writing lands even with sound off (a lot of teens play muted).
 let bossSpeechTimer = null;
-function showBossSpeech(text) {
-  const scene = $('scene-battle');
-  if (!scene || !scene.classList.contains('active')) return;
-  const stage = $('battle-stage');
-  if (!stage) return;
+function showSpeech(text, who) {
+  if (!text) return;
   const old = document.querySelector('.boss-speech');
   if (old) old.remove();
   clearTimeout(bossSpeechTimer);
-  const bubble = el('div', 'boss-speech');
+  // Anchor inside the battle stage when fighting (inherits world color),
+  // else on the body (login select / victory). It's a fixed toast either way.
+  const battle = $('scene-battle');
+  const host = (battle && battle.classList.contains('active') && $('battle-stage')) || document.body;
+  const bubble = el('div', 'boss-speech' + (who === 'hero' ? ' hero-speech' : ''));
   bubble.textContent = text;
-  stage.appendChild(bubble);
+  host.appendChild(bubble);
   void bubble.offsetWidth;
   bubble.classList.add('show');
   const dur = Math.max(2600, Math.min(7000, text.length * 55));
@@ -1228,7 +1229,8 @@ document.addEventListener('DOMContentLoaded', () => {
   initLedger();
   if (window.Quests) Quests.init();
   initKeyboard();
-  window.PL_onBossSpeak = showBossSpeech; // boss lines appear as subtitles
+  window.PL_onBossSpeak = (t) => showSpeech(t, 'boss'); // boss + hero lines appear as subtitles
+  window.PL_onHeroSpeak = (t) => showSpeech(t, 'hero');
   // start on login
   showScene('scene-login');
 });

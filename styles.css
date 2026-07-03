@@ -2706,3 +2706,13 @@ body[data-theme="cozy"] .study-key-num { text-shadow: 0 0 14px rgba(253,164,175,
 @media (max-width: 640px) {
   .boss-speech { font-size: 15px; padding: 10px 16px; max-width: 92%; }
 }
+
+/* Hero lines read friendly: cyan accent, upright body font (vs villain italic serif) */
+.boss-speech.hero-speech {
+  border-color: color-mix(in srgb, #6ee7b7 65%, transparent);
+  box-shadow: 0 16px 44px rgba(0,0,0,0.75), 0 0 26px rgba(110,231,183,0.35);
+  font-family: var(--font-body);
+  font-style: normal;
+  font-weight: 600;
+  font-size: 16px;
+}
