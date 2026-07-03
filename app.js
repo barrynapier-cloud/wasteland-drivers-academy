@@ -953,6 +953,29 @@ function triggerBossStrike(dmg) {
   }, 250);
 }
 
+// Boss speech bubble — shows the spoken line on the battle stage so the
+// writing lands even with sound off (a lot of teens play muted).
+let bossSpeechTimer = null;
+function showBossSpeech(text) {
+  const scene = $('scene-battle');
+  if (!scene || !scene.classList.contains('active')) return;
+  const stage = $('battle-stage');
+  if (!stage) return;
+  const old = document.querySelector('.boss-speech');
+  if (old) old.remove();
+  clearTimeout(bossSpeechTimer);
+  const bubble = el('div', 'boss-speech');
+  bubble.textContent = text;
+  stage.appendChild(bubble);
+  void bubble.offsetWidth;
+  bubble.classList.add('show');
+  const dur = Math.max(2600, Math.min(7000, text.length * 55));
+  bossSpeechTimer = setTimeout(() => {
+    bubble.classList.remove('show');
+    setTimeout(() => bubble.remove(), 400);
+  }, dur);
+}
+
 function triggerAttack(dmg, isCrit) {
   sfx(isCrit ? 'crit' : 'slash');
   // Hero animation
@@ -1205,6 +1228,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initLedger();
   if (window.Quests) Quests.init();
   initKeyboard();
+  window.PL_onBossSpeak = showBossSpeech; // boss lines appear as subtitles
   // start on login
   showScene('scene-login');
 });

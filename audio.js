@@ -198,15 +198,24 @@ const Sound = (() => {
   };
   function bank() { return tauntBank || FALLBACK_BANK; }
 
+  // Show the spoken line on-screen too (subtitles / muted play / a11y).
+  // The app registers window.PL_onBossSpeak to render a speech bubble.
+  function announce(text) {
+    if (text) { try { if (window.PL_onBossSpeak) window.PL_onBossSpeak(text); } catch (e) {} }
+  }
+
   function bossCry(houseId) {
+    const t = bank()[houseId];
+    if (t) announce(t.cry);
     if (playClip(`${currentThemeId}/${houseId}-cry`)) return;
-    const t = bank()[houseId]; if (t) say(t.cry, { pitch: 0.4, rate: 0.85 });
+    if (t) say(t.cry, { pitch: 0.4, rate: 0.85 });
   }
   function bossTaunt(houseId) {
     const t = bank()[houseId];
     const lines = (t && t.strike) || [];
     const n = lines.length || 3;
     const i = Math.floor(Math.random() * n);
+    if (lines.length) announce(lines[i] || lines[0]);
     if (playClip(`${currentThemeId}/${houseId}-taunt${i}`)) return;
     if (lines.length) say(lines[i] || lines[0], { pitch: 0.42, rate: 0.92 });
   }
@@ -215,6 +224,7 @@ const Sound = (() => {
     const lines = (t && t.defeat) || (fallbackText ? [fallbackText] : []);
     const n = lines.length || 1;
     const i = Math.floor(Math.random() * n);
+    if (lines.length) announce(lines[i] || lines[0]);
     if (playClip(`${currentThemeId}/${houseId}-defeat${i}`)) return;
     if (lines.length) say(lines[i] || lines[0], { pitch: 0.5, rate: 0.82 });
   }

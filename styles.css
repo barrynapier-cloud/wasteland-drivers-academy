@@ -2673,3 +2673,36 @@ body[data-theme="cozy"] .study-key {
   border: 2px solid rgba(253,164,175,0.5);
 }
 body[data-theme="cozy"] .study-key-num { text-shadow: 0 0 14px rgba(253,164,175,0.7); }
+
+/* ============================================================
+   BOSS SPEECH BUBBLE — spoken lines as a top-screen subtitle toast
+   Fixed at top so it always reads (muted play / accessibility), never
+   clipped or lost behind the boss art. Inherits the world color (--bc).
+   ============================================================ */
+.boss-speech {
+  position: fixed;
+  top: 14px;
+  left: 50%;
+  transform: translate(-50%, -18px) scale(0.97);
+  max-width: min(90%, 640px);
+  text-align: center;
+  background: rgba(5,2,4,0.96);
+  border: 1.5px solid color-mix(in srgb, var(--bc, var(--pink)) 72%, transparent);
+  border-radius: 14px;
+  padding: 12px 22px;
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: 17px;
+  line-height: 1.42;
+  color: var(--bone);
+  text-shadow: 0 1px 8px rgba(0,0,0,0.95);
+  box-shadow: 0 16px 44px rgba(0,0,0,0.75), 0 0 28px color-mix(in srgb, var(--bc, var(--pink)) 45%, transparent);
+  opacity: 0;
+  z-index: 60;
+  pointer-events: none;
+  transition: opacity 0.35s ease, transform 0.35s cubic-bezier(.2,.9,.3,1);
+}
+.boss-speech.show { opacity: 1; transform: translate(-50%, 0) scale(1); }
+@media (max-width: 640px) {
+  .boss-speech { font-size: 15px; padding: 10px 16px; max-width: 92%; }
+}
