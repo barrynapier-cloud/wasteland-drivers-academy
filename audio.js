@@ -160,7 +160,7 @@ const Sound = (() => {
   let clipSet = new Set();
   let currentThemeId = 'wasteland';
   if (typeof fetch === 'function') {
-    fetch('audio/manifest.json').then(r => r.ok ? r.json() : []).then(list => {
+    fetch('audio/manifest.json', { cache: 'no-store' }).then(r => r.ok ? r.json() : []).then(list => {
       if (Array.isArray(list)) clipSet = new Set(list);
     }).catch(() => {});
   }
