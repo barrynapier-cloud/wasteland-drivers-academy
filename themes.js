@@ -375,8 +375,10 @@ function applyTheme(themeId) {
     c.boss.name = h.boss.name;
     c.boss.image = h.boss.image;
     c.boss.threat = h.boss.threat;
-    c.boss.defeatLine = h.boss.defeatLine;
     c.boss.reward = h.boss.reward;
+    // On-screen "last words" match the spoken cast defeat line when available.
+    const cast = window.VOICE_CAST && VOICE_CAST.bosses[`${t.id}-${c.id}`];
+    c.boss.defeatLine = (cast && cast.defeats && cast.defeats[0]) || h.boss.defeatLine;
   });
 
   // 2. Avatars
@@ -391,15 +393,16 @@ function applyTheme(themeId) {
   });
   Object.entries(t.palette || {}).forEach(([k, v]) => root.style.setProperty(k, v));
 
-  // 4. Sound: flavor + taunt bank + whether real voice clips exist.
+  // 4. Sound: flavor + theme id + boss bank from the voice cast.
   // Guarded per-method so a stale audio engine can never break theming.
   if (window.Sound) {
     if (typeof Sound.setFlavor === 'function') Sound.setFlavor(THEME_FLAVORS[t.flavor] || THEME_FLAVORS.gothic);
-    if (typeof Sound.setTauntBank === 'function') {
-      const bank = {};
-      Object.keys(t.houses).forEach(id => { bank[id] = t.houses[id].taunts; });
-      Sound.setTauntBank(bank, t.voiceClips === true);
-    }
+    if (typeof Sound.setTheme === 'function') Sound.setTheme(t.id);
+    const bank = (typeof bossBankForTheme === 'function')
+      ? bossBankForTheme(t.id)
+      : (() => { const b = {}; Object.keys(t.houses).forEach(id => { b[id] = t.houses[id].taunts; }); return b; })();
+    if (typeof Sound.setBossBank === 'function') Sound.setBossBank(bank);
+    else if (typeof Sound.setTauntBank === 'function') Sound.setTauntBank(bank);
   }
 
   // 5. Brand copy

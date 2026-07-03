@@ -141,35 +141,35 @@ const Sound = (() => {
     return voices.find(v => /en[-_]/i.test(v.lang)) || voices[0];
   }
 
-  function say(text, { pitch = 0.4, rate = 0.86, volume = 0.95 } = {}) {
+  function say(text, { pitch = 0.4, rate = 0.86, volume = 0.95, deep = true } = {}) {
     if (!voiceOn || !text || !('speechSynthesis' in window)) return;
     try {
       speechSynthesis.cancel();
       const u = new SpeechSynthesisUtterance(text);
-      if (!demonVoice) demonVoice = pickDemonVoice();
-      if (demonVoice) u.voice = demonVoice;
+      if (deep) { if (!demonVoice) demonVoice = pickDemonVoice(); if (demonVoice) u.voice = demonVoice; }
       u.pitch = pitch; u.rate = rate; u.volume = volume;
       speechSynthesis.speak(u);
     } catch (e) { /* speech not available — fail silent */ }
   }
 
   // ---- Pre-rendered ElevenLabs voice clips (high fidelity) ----
-  // Files that exist as audio/<name>.mp3. bossCry/bossTaunt/bossDefeat
-  // play these when present and fall back to SpeechSynthesis otherwise.
-  const VOICE_CLIPS = new Set([
-    'blood-cry', 'blood-taunt0', 'blood-taunt1', 'blood-taunt2', 'blood-defeat',
-    'ember-cry', 'ember-taunt0', 'ember-taunt1', 'ember-taunt2', 'ember-defeat',
-    'static-cry', 'static-taunt0', 'static-taunt1', 'static-taunt2', 'static-defeat',
-    'iron-cry', 'iron-taunt0', 'iron-taunt1', 'iron-taunt2', 'iron-defeat',
-    'thorn-cry', 'thorn-taunt0', 'thorn-taunt1', 'thorn-taunt2', 'thorn-defeat',
-    'bone-cry', 'bone-taunt0', 'bone-taunt1', 'bone-taunt2', 'bone-defeat'
-  ]);
+  // Availability is driven by audio/manifest.json (an array of clip
+  // paths like "wasteland/blood-cry" or "heroes/vex-intro"), loaded at
+  // boot. Any path not in the manifest falls back to the browser voice
+  // using the same written line, so partial rollouts never go silent.
+  let clipSet = new Set();
+  let currentThemeId = 'wasteland';
+  if (typeof fetch === 'function') {
+    fetch('audio/manifest.json').then(r => r.ok ? r.json() : []).then(list => {
+      if (Array.isArray(list)) clipSet = new Set(list);
+    }).catch(() => {});
+  }
   let currentClip = null;
-  function playClip(name) {
-    if (!voiceOn || !VOICE_CLIPS.has(name)) return false;
+  function playClip(path) {
+    if (!voiceOn || !clipSet.has(path)) return false;
     try {
       if (currentClip) { try { currentClip.pause(); } catch (e) {} }
-      const a = new Audio(`audio/${name}.mp3`);
+      const a = new Audio(`audio/${path}.mp3`);
       a.volume = 0.95;
       currentClip = a;
       a.play().catch(() => {});
@@ -186,56 +186,55 @@ const Sound = (() => {
     speechSynthesis.onvoiceschanged = () => { demonVoice = pickDemonVoice(); };
   }
 
-  // ---- Boss taunt banks, keyed by chapter id ----
-  const TAUNTS = {
-    blood: {
-      cry: "I am the toast at every wake. Drink, and drive into my arms.",
-      strike: ["Your blood sings my song.", "One more for the road... your last.", "Point oh eight. That is all it takes."],
-    },
-    ember: {
-      cry: "Your eyes belong to the screen now. Look away if you dare.",
-      strike: ["Glance at me. Just for a second.", "The notification owns you.", "Eyes off the road, little driver."],
-    },
-    static: {
-      cry: "I live in the blind spot. The child you never saw.",
-      strike: ["You did not see them.", "Twenty miles an hour, and still too fast.", "The crosswalk is mine."],
-    },
-    iron: {
-      cry: "Every sign is a riddle. Read wrong, and bleed.",
-      strike: ["You misread the iron.", "Red means stop. You did not.", "The markings betray you."],
-    },
-    thorn: {
-      cry: "Six roads cross here, and every one is mine to grant.",
-      strike: ["You took what was not yours.", "Yield, or be taken.", "First passage belongs to me."],
-    },
-    bone: {
-      cry: "I keep the final ledger. Every error written in bone.",
-      strike: ["Another mark against you.", "The ledger remembers.", "You are almost spent."],
-    }
+  // The active theme's boss bank (houseId -> {cry, strike[], defeat[]}).
+  // Provided by themes.js via setBossBank; falls back to a built-in set.
+  const FALLBACK_BANK = {
+    blood: { cry: "One drink is all it takes.", strike: ["Point oh eight."], defeat: ["You stayed under the line."] },
+    ember: { cry: "Legal does not mean safe.", strike: ["Your reflexes slow."], defeat: ["You knew the difference."] },
+    static: { cry: "Just one look.", strike: ["You did not see them."], defeat: ["Eyes on the road. Always."] },
+    iron: { cry: "Read the sign wrong and pay.", strike: ["Red means stop."], defeat: ["You read them all true."] },
+    thorn: { cry: "Who goes first? Choose.", strike: ["You did not yield."], defeat: ["You knew whose turn it was."] },
+    bone: { cry: "Every number, remembered.", strike: ["Another mark."], defeat: ["The account is clean."] }
   };
-  function bank() { return tauntBank || TAUNTS; }
-  function bossCry(chapterId) {
-    if (clipsAvailable && playClip(`${chapterId}-cry`)) return;
-    const t = bank()[chapterId]; if (t) say(t.cry, { pitch: 0.35, rate: 0.82 });
+  function bank() { return tauntBank || FALLBACK_BANK; }
+
+  function bossCry(houseId) {
+    if (playClip(`${currentThemeId}/${houseId}-cry`)) return;
+    const t = bank()[houseId]; if (t) say(t.cry, { pitch: 0.4, rate: 0.85 });
   }
-  function bossTaunt(chapterId) {
-    const t = bank()[chapterId];
-    const n = (t && t.strike.length) ? t.strike.length : 3;
+  function bossTaunt(houseId) {
+    const t = bank()[houseId];
+    const lines = (t && t.strike) || [];
+    const n = lines.length || 3;
     const i = Math.floor(Math.random() * n);
-    if (clipsAvailable && playClip(`${chapterId}-taunt${i}`)) return;
-    if (t && t.strike.length) say(t.strike[i] || t.strike[0], { pitch: 0.38, rate: 0.9 });
+    if (playClip(`${currentThemeId}/${houseId}-taunt${i}`)) return;
+    if (lines.length) say(lines[i] || lines[0], { pitch: 0.42, rate: 0.92 });
   }
-  function bossDefeat(chapterId, fallbackText) {
-    if (clipsAvailable && playClip(`${chapterId}-defeat`)) return;
-    if (fallbackText) say(fallbackText, { pitch: 0.45, rate: 0.8 });
+  function bossDefeat(houseId, fallbackText) {
+    const t = bank()[houseId];
+    const lines = (t && t.defeat) || (fallbackText ? [fallbackText] : []);
+    const n = lines.length || 1;
+    const i = Math.floor(Math.random() * n);
+    if (playClip(`${currentThemeId}/${houseId}-defeat${i}`)) return;
+    if (lines.length) say(lines[i] || lines[0], { pitch: 0.5, rate: 0.82 });
+  }
+
+  // Hero voices — played on driver select and on victory. Fallback uses
+  // the normal browser voice (not the deep villain voice).
+  function heroVoice(heroId, kind) {
+    if (!heroId) return;
+    if (playClip(`heroes/${heroId}-${kind}`)) return;
+    const cast = (window.VOICE_CAST && VOICE_CAST.heroes && VOICE_CAST.heroes[heroId]) || null;
+    const line = cast && cast[kind];
+    if (line) say(line, { pitch: 1.0, rate: 1.0, deep: false });
   }
 
   // Theme hooks
   function setFlavor(f) { if (f && f.lead && f.bass) flavor = f; }
-  function setTauntBank(newBank, hasClips) {
-    tauntBank = newBank || null;
-    clipsAvailable = hasClips === true;
-  }
+  function setTheme(themeId) { if (themeId) currentThemeId = themeId; }
+  function setBossBank(newBank) { tauntBank = newBank || null; }
+  // Back-compat shim for older callers.
+  function setTauntBank(newBank) { tauntBank = newBank || null; }
 
   // ============================================================
   // Toggles + boot
@@ -257,9 +256,9 @@ const Sound = (() => {
     window.addEventListener(ev, unlock, { once: false, passive: true }));
 
   return {
-    fx: FX, say, shutUp, bossCry, bossTaunt, bossDefeat,
+    fx: FX, say, shutUp, bossCry, bossTaunt, bossDefeat, heroVoice,
     setSfx, setVoice, isSfxOn, isVoiceOn, unlock,
-    setFlavor, setTauntBank
+    setFlavor, setTheme, setBossBank, setTauntBank
   };
 })();
 

@@ -210,6 +210,7 @@ function renderAvatarGrid() {
       player.avatar = a.img;
       player.avatarMeta = a;
       sfx('select');
+      if (window.Sound) Sound.heroVoice(a.id, 'intro'); // driver speaks their signature line
       checkLoginReady();
     });
     grid.appendChild(tile);
@@ -1004,7 +1005,12 @@ function endBattleVictory() {
   // Defeat animation
   $('battle-demon').classList.add('defeated');
   sfx('victory');
-  if (window.Sound) setTimeout(() => Sound.bossDefeat(c.id, boss.defeatLine), 500);
+  if (window.Sound) {
+    setTimeout(() => Sound.bossDefeat(c.id, boss.defeatLine), 500);
+    // The demon has its last word, then the driver claims the win.
+    const heroId = player.avatarMeta && player.avatarMeta.id;
+    if (heroId) setTimeout(() => Sound.heroVoice(heroId, 'win'), 3000);
+  }
 
   // Apply rewards
   const battleXp = battleState.xpThisBattle;
