@@ -13,3 +13,4 @@ build/
 .claude/
 .vercel
 codes-private.txt
+admin-local.html
