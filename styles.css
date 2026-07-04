@@ -2716,3 +2716,115 @@ body[data-theme="cozy"] .study-key-num { text-shadow: 0 0 14px rgba(253,164,175,
   font-weight: 600;
   font-size: 16px;
 }
+
+/* ============================================================
+   MOBILE OPTIMIZATION — phones are the primary device for the
+   audience. One layer, ≤480px, covering every scene.
+   ============================================================ */
+@media (max-width: 480px) {
+
+  /* ---- Global rhythm ---- */
+  .scene { padding-left: 0; padding-right: 0; }
+  .map-wrap, .study-actions { padding-left: 14px; padding-right: 14px; }
+
+  /* ---- HUD: 190px stack -> compact 2-row grid ---- */
+  .hud {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    grid-template-areas:
+      "avatar info stats"
+      "avatar controls controls";
+    gap: 4px 10px;
+    padding: 10px 12px calc(10px + env(safe-area-inset-top) * 0);
+    align-items: center;
+  }
+  .hud-avatar { grid-area: avatar; width: 44px; height: 44px; }
+  .hud-info { grid-area: info; min-width: 0; }
+  .hud-name { font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .hud-level { font-size: 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .hud-stats { grid-area: stats; gap: 12px; }
+  .hud-stats strong { font-size: 15px; }
+  .hud-stats span { font-size: 7px; }
+  .hud-audio { grid-area: controls; justify-self: start; margin-left: 0; }
+  .audio-toggle { width: 32px; height: 32px; font-size: 13px; }
+  #hud-logout { grid-area: controls; justify-self: end; }
+
+  .map-title { font-size: 26px; }
+  .map-sub { font-size: 14px; margin-bottom: 18px; }
+  .map-grid { gap: 14px; }
+  .chapter-tile { padding: 18px 18px; }
+  .ct-title { font-size: 19px; }
+  .ct-sub { margin-bottom: 10px; }
+  .map-cheat { display: flex; flex-direction: column; gap: 10px; }
+  .map-cheat .ghost-btn { width: 100%; }
+
+  /* ---- Login: compact adventure + avatar grids ---- */
+  .login-card { padding: 28px 16px; }
+  .login-title { font-size: 40px; }
+  .adventure-grid { grid-template-columns: 1fr 1fr; gap: 8px; }
+  .adventure-pick { padding: 12px 8px 10px; gap: 4px; }
+  .adventure-icon { font-size: 22px; }
+  .adventure-name { font-size: 13px; }
+  .adventure-pitch { font-size: 10px; line-height: 1.3; }
+  .avatar-grid { gap: 8px; }
+  .avatar-pick { height: 170px; }
+
+  /* ---- Study: cap art, tighten type ---- */
+  .study-art { height: 260px; }
+  .study-title { font-size: 24px; }
+  .study-key-num { font-size: 34px; }
+  .study-teach { font-size: 15px; }
+  .study-remember li { font-size: 12px; }
+  .study-actions { gap: 10px; }
+  .study-actions .primary-btn, .study-actions .ghost-btn { flex: 1; padding-left: 10px; padding-right: 10px; }
+
+  /* ---- Battle: shrink the sticky stage so questions get room ---- */
+  .battle-stage { padding: 10px 8px 8px; gap: 4px; }
+  .fighter-portrait { width: 76px; height: 100px; }
+  .fighter-name { font-size: 11px; max-width: 110px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .fighter-hp { width: 110px; }
+  .fighter-hp-text { font-size: 7px; }
+  .fighter-combo, .fighter-threat { font-size: 7px; max-width: 110px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .battle-vs { transform: scale(0.8); }
+  .battle-ui { padding: 14px 14px calc(20px + env(safe-area-inset-bottom)); }
+  .battle-q { font-size: 18px; }
+  .quiz-option, .battle-option, .trial-option { padding: 13px 14px; font-size: 15px; gap: 10px; }
+  .battle-stage-sign { width: 54px; }
+
+  /* ---- Quiz / trial run ---- */
+  .quiz-stage { padding: 18px 14px 60px; }
+  .quiz-q, .trial-q { font-size: 19px; }
+  .q-sign img { width: 92px; }
+  .quiz-hud, .study-hud, .ledger-hud { padding: 10px 12px; }
+
+  /* ---- Trials hub / results ---- */
+  .trials-grid { padding: 6px 14px 60px; gap: 14px; }
+  .trial-card { padding: 20px 18px; }
+  .trial-name { font-size: 21px; }
+  .trial-result-title { font-size: 38px; }
+  .trial-result-stats { gap: 10px; }
+  .exam-house-row { grid-template-columns: 92px 1fr 44px; gap: 8px; padding: 7px 9px; }
+
+  /* ---- Chapter intro / victory / defeat / complete ---- */
+  .chapter-intro { padding: 26px 16px; }
+  .ci-title { font-size: 28px; }
+  .ci-arc { gap: 8px; }
+  .victory-stage, .defeat-stage, .complete-stage { padding: 40px 16px; }
+  .victory-title, .complete-title { font-size: 30px; }
+  .defeat-title { font-size: 26px; }
+  .defeat-actions, .complete-actions, .victory-actions { flex-direction: column; align-items: stretch; gap: 10px; }
+  .complete-sigils { gap: 10px; }
+  .complete-sigil { width: 52px; height: 52px; font-size: 24px; }
+
+  /* ---- Ledger ---- */
+  .ledger-grid { grid-template-columns: 1fr 1fr; gap: 10px; padding: 12px 14px 60px; }
+  .ledger-num { font-size: 20px; }
+
+  /* ---- Hint modal ---- */
+  .hint-card { width: calc(100% - 24px); max-height: 86vh; padding: 22px 16px; }
+  .hint-title { font-size: 22px; }
+
+  /* ---- Toasts / popups ---- */
+  .streak-pop { font-size: 30px; }
+  .boss-speech { top: calc(8px + env(safe-area-inset-top)); }
+}
