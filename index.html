@@ -140,7 +140,7 @@
           <li>Mock exams: 25 questions, the real 80% pass bar, weakest topic named</li>
           <li>Progress saves on the device, works in any phone or laptop browser</li>
         </ul>
-        <a class="btn btn-primary" id="buy-btn" href="REPLACE_WITH_STRIPE_PAYMENT_LINK">Unlock All 5 Worlds for $20</a>
+        <a class="btn btn-primary" id="buy-btn" href="https://buy.stripe.com/5kQ5kw9Hr9To7D31SweAg00">Unlock All 5 Worlds for $20</a>
         <div class="guarantee"><strong>The deal, in plain English.</strong> Your kid finishes all six chapters and the mock exams. If they then walk into the DOL and fail the real Washington knowledge test, email us the receipt and the full $20 comes back. No forms, no argument. We can make that promise because a kid who has cleared their Mistake Ledger and passed the mock at 80 percent has already passed this test. The DOL visit just makes it official.</div>
         <p class="ps-note"><strong>P.S.</strong> You do not have to decide anything today. Chapter 1 is free, no account, no card. Hand your kid the phone tonight and see if they keep playing. If they do, come back and unlock the rest for $20. And if they finish it all and still fail the real test, the $20 comes back. That is the entire deal.</p>
         <p class="redeem">Already paid? <a href="unlock.html">Enter your access code</a></p>
@@ -152,16 +152,5 @@
     <p>Built from the official <a href="https://dol.wa.gov/driver-licenses-and-permits/driver-guide" target="_blank" rel="noopener">Washington State Driver Guide</a> and RCW statutes. Not affiliated with the WA Department of Licensing.</p>
     <p><a href="science.html">The Science</a> · <a href="play.html">Play Free</a> · <a href="mailto:barry@localbusiness.academy">Support</a></p>
   </footer>
-
-  <script>
-    // If the Stripe link is not wired yet, keep the button honest.
-    const buy = document.getElementById('buy-btn');
-    if (buy && buy.getAttribute('href').indexOf('REPLACE_WITH') === 0) {
-      buy.addEventListener('click', (e) => {
-        e.preventDefault();
-        alert('Checkout goes live within hours. Play Chapter 1 free while you wait!');
-      });
-    }
-  </script>
 </body>
 </html>
