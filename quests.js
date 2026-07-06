@@ -98,8 +98,8 @@ const Quests = (() => {
         <div class="trial-icon">🕯</div>
         <h3 class="trial-name">The Final Reckoning</h3>
         <p class="trial-desc">A mock written exam. 25 questions across all six houses, no hints, no lessons. Score 80% and you'd pass the real one.</p>
-        <p class="trial-best">${paidTier() ? (best.exam != null ? `Best this session · <strong>${best.exam}%</strong>` : `Untested · <strong>—</strong>`) : 'Full version · <strong>$20 unlock</strong>'}</p>
-        <button class="primary-btn small trial-go">${paidTier() ? 'Sit the Exam →' : '🔓 Unlock to Sit →'}</button>
+        <p class="trial-best">${paidTier() ? (best.exam != null ? `Best this session · <strong>${best.exam}%</strong>` : `Untested · <strong>—</strong>`) : 'Walking in without a mock is how people fail the real one · <strong>$20</strong>'}</p>
+        <button class="primary-btn small trial-go">${paidTier() ? 'Sit the Exam →' : "🔓 Don't Test Blind →"}</button>
       </div>
     `;
 

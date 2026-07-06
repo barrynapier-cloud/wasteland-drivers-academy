@@ -186,6 +186,27 @@ const AVATARS = [
   }
 ];
 
+// Smart defaults: per-world name suggestions. Prefilled, always editable.
+// A prefilled field reads as a recommendation; a blank one reads as homework.
+const NAME_SUGGESTIONS = {
+  wasteland: ['Rune', 'Echo', 'Hex', 'Ash', 'Raven'],
+  neon: ['Pixel', 'Volt', 'Cipher', 'Dash', 'Glitch'],
+  cosmic: ['Nova', 'Astra', 'Comet', 'Sol', 'Vega'],
+  realm: ['Rowan', 'Sage', 'Thane', 'Ember', 'Fen'],
+  cozy: ['Maple', 'Clover', 'Biscuit', 'Pepper', 'Sunny']
+};
+function suggestName() {
+  const input = $('login-name');
+  if (!input) return;
+  // Only overwrite untouched or previously auto-filled values
+  if (input.value && input.dataset.auto !== '1') return;
+  const pool = NAME_SUGGESTIONS[player.themeId] || NAME_SUGGESTIONS.wasteland;
+  input.value = pool[Math.floor(Math.random() * pool.length)];
+  input.dataset.auto = '1';
+  player.name = input.value.trim();
+  checkLoginReady();
+}
+
 function renderAvatarGrid() {
   const grid = $('avatar-grid');
   grid.innerHTML = '';
@@ -215,6 +236,13 @@ function renderAvatarGrid() {
     });
     grid.appendChild(tile);
   });
+  // Smart default: first driver preselected — scan and adjust beats decide-from-scratch
+  const first = grid.querySelector('.avatar-pick');
+  if (first && AVATARS[0]) {
+    first.classList.add('selected');
+    player.avatar = AVATARS[0].img;
+    player.avatarMeta = AVATARS[0];
+  }
   checkLoginReady();
 }
 
@@ -236,6 +264,7 @@ function renderAdventureGrid() {
       player.themeId = t.id;
       applyTheme(t.id);
       renderAvatarGrid(); // avatars belong to the world
+      suggestName();      // themed default name — editable, never blank
       sfx('select');
       checkLoginReady();
     });
@@ -283,9 +312,11 @@ function initLogin() {
   }
 
   $('login-name').addEventListener('input', (e) => {
+    e.target.dataset.auto = '0'; // user took ownership of the name
     player.name = e.target.value.trim();
     checkLoginReady();
   });
+  suggestName(); // never present a blank field
   $('login-name').addEventListener('keydown', (e) => {
     if (e.key === 'Enter' && !$('login-start').disabled) $('login-start').click();
   });
@@ -337,7 +368,32 @@ function syncHud() {
   $('hud-streak').textContent = player.bestStreak;
 }
 
+// Goal gradient: license progress never reads 0%. Forging a driver counts
+// as the first 10% (it is a real step), each cleared chapter adds 15%.
+function renderLicenseMeter() {
+  const wrap = document.querySelector('.map-wrap');
+  if (!wrap) return;
+  let meter = document.getElementById('license-meter');
+  const done = Object.keys(player.completed).length;
+  const pct = Math.min(100, 10 + done * 15);
+  const label = pct >= 100 ? 'LICENSE EARNED' : `${pct}% to your license`;
+  const html = `
+    <div class="lm-row">
+      <span class="lm-label">🪪 ${label}</span>
+      <span class="lm-note">${done === 0 ? 'Driver forged ✓ — chapter 1 is next' : `${6 - done} chapter${6 - done === 1 ? '' : 's'} between you and the exam`}</span>
+    </div>
+    <div class="lm-bar"><div class="lm-fill" style="width:${pct}%"></div></div>`;
+  if (!meter) {
+    meter = el('div', 'license-meter');
+    meter.id = 'license-meter';
+    const grid = $('map-grid');
+    wrap.insertBefore(meter, grid);
+  }
+  meter.innerHTML = html;
+}
+
 function renderMap() {
+  renderLicenseMeter();
   const grid = $('map-grid');
   grid.innerHTML = '';
   CHAPTERS.forEach((c, i) => {
@@ -369,7 +425,7 @@ function renderMap() {
     if (isUnlocked) {
       tile.addEventListener('click', () => enterChapter(c.id));
     } else if (payLocked) {
-      const badge = el('div', 'ct-paybadge', '🔓 Unlock all worlds · $20');
+      const badge = el('div', 'ct-paybadge', '🔓 Your run stops here · unlock $20');
       tile.appendChild(badge);
       tile.addEventListener('click', () => { window.location.href = 'index.html#pricing'; });
     }
