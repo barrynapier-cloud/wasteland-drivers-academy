@@ -2851,3 +2851,31 @@ body[data-theme="cozy"] .study-key-num { text-shadow: 0 0 14px rgba(253,164,175,
   transition: width 0.8s cubic-bezier(.2,.8,.2,1);
 }
 @media (max-width: 480px) { .license-meter { margin-bottom: 16px; padding: 11px 14px; } }
+
+/* ============================================================
+   ACCOUNT MODAL + cloud save button
+   ============================================================ */
+#account-modal { position: fixed; inset: 0; z-index: 90; display: none; }
+#account-modal.open { display: block; }
+.acct-bg { position: absolute; inset: 0; background: rgba(5,2,4,0.8); backdrop-filter: blur(3px); }
+.acct-card {
+  position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+  width: min(92%, 400px);
+  background: linear-gradient(160deg, rgba(40,10,18,0.98), rgba(15,4,8,0.99));
+  border: 1px solid rgba(255,166,201,0.35);
+  border-radius: 20px;
+  padding: 30px 26px;
+  box-shadow: 0 30px 90px rgba(0,0,0,0.8);
+}
+.acct-close { position: absolute; top: 10px; right: 14px; background: none; border: 0; color: var(--ink-dim); font-size: 26px; cursor: pointer; }
+.acct-title { font-family: var(--font-display); font-size: 22px; color: var(--bone); margin: 0 0 8px; }
+.acct-sub { font-size: 13px; color: var(--ink-dim); line-height: 1.5; margin: 0 0 14px; }
+.acct-card input {
+  width: 100%; padding: 13px 14px; margin: 4px 0 12px;
+  border-radius: 12px; border: 1px solid rgba(255,166,201,0.35);
+  background: rgba(0,0,0,0.35); color: var(--bone);
+  font-family: var(--font-body); font-size: 16px; text-align: center;
+}
+.acct-card .primary-btn, .acct-card .ghost-btn { width: 100%; }
+.acct-msg { min-height: 18px; font-size: 12px; color: var(--pink-soft); margin: 10px 0 0; text-align: center; }
+.acct-btn { width: auto; padding: 0 10px; font-size: 11px; font-family: var(--font-mono); letter-spacing: 0.05em; }

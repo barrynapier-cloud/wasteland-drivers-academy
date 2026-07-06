@@ -4,6 +4,12 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>Permit Legends: your teen will not read the driver guide. They will fight a boss that quotes it.</title>
+  <link rel="manifest" href="manifest.json" />
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="theme-color" content="#150305" />
+
   <meta name="description" content="Washington permit test prep that plays like a video game. Real WA Driver Guide facts, five worlds, boss battles, mock exams at the real 80% pass bar. Chapter 1 free. $20 once. Fail the real test after finishing and the $20 comes back." />
   <meta property="og:title" content="Permit Legends" />
   <meta property="og:description" content="Your teen will not read a 100-page driver guide. They will fight a boss that quotes it. Chapter 1 free." />
@@ -152,5 +158,10 @@
     <p>Built from the official <a href="https://dol.wa.gov/driver-licenses-and-permits/driver-guide" target="_blank" rel="noopener">Washington State Driver Guide</a> and RCW statutes. Not affiliated with the WA Department of Licensing.</p>
     <p><a href="science.html">The Science</a> · <a href="play.html">Play Free</a> · <a href="mailto:barry@localbusiness.academy">Support</a></p>
   </footer>
+  <script>
+    if ('serviceWorker' in navigator && location.protocol === 'https:') {
+      navigator.serviceWorker.register('/sw.js').catch(() => {});
+    }
+  </script>
 </body>
 </html>

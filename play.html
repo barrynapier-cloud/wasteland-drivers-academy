@@ -4,6 +4,12 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>Wasteland Drivers Academy — A Goth Driving School RPG</title>
+  <link rel="manifest" href="manifest.json" />
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="theme-color" content="#150305" />
+
   <meta name="description" content="A goth-anime-kawaii RPG that teaches the Washington State Driver Guide. Study cards, take quiz challenges, battle demons, level up." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -307,6 +313,12 @@
   <script src="voices.js?v=20260706a"></script>
   <script src="themes.js?v=20260706a"></script>
   <script src="quests.js?v=20260706a"></script>
+  <script src="account.js?v=20260706a"></script>
   <script src="app.js?v=20260706a"></script>
+  <script>
+    if ('serviceWorker' in navigator && location.protocol === 'https:') {
+      navigator.serviceWorker.register('/sw.js').catch(() => {});
+    }
+  </script>
 </body>
 </html>

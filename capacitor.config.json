@@ -1,0 +1,8 @@
+{
+  "appId": "com.permitlegends.app",
+  "appName": "Permit Legends",
+  "webDir": "www",
+  "backgroundColor": "#150305",
+  "ios": { "contentInset": "never" },
+  "android": { "backgroundColor": "#150305" }
+}

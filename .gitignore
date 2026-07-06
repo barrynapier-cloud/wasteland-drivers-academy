@@ -14,3 +14,7 @@ build/
 .vercel
 codes-private.txt
 admin-local.html
+www/
+android/
+ios/
+package-lock.json

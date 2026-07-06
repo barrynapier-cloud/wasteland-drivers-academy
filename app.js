@@ -52,6 +52,10 @@ function validCode(code) {
   return body.split('').reduce((a, ch) => a + ch.charCodeAt(0) * 7, 0) % 97 === 55;
 }
 function isPaid() {
+  // Native store builds are paid upfront — everything unlocked.
+  if (window.PL_NATIVE_PAID === true) return true;
+  // Account entitlement follows the player across devices.
+  if (window.Account && Account.isUnlocked && Account.isUnlocked()) return true;
   try { return validCode(localStorage.getItem('pl_unlock') || ''); } catch (e) { return false; }
 }
 
@@ -64,6 +68,7 @@ function saveProgress() {
       mistakes: player.mistakes, revealed: Array.from(revealedKeys)
     }));
   } catch (e) { /* private mode etc — play on without saves */ }
+  if (window.Account && Account.schedulePush) Account.schedulePush();
 }
 function loadProgress() {
   try { const raw = localStorage.getItem('pl_save'); return raw ? JSON.parse(raw) : null; } catch (e) { return null; }
