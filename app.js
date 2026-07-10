@@ -87,11 +87,9 @@ function clearProgress() { try { localStorage.removeItem(plSaveKey()); } catch (
 // the now-active save (account-scoped when signed in, guest when signed out).
 // Only re-enters if we're past the login screen and the active save differs.
 window.PL_reloadActiveSave = function () {
-  const onLogin = $('scene-login') && $('scene-login').classList.contains('active');
-  if (onLogin) { // refresh the resume banner if present
-    if (typeof refreshResumeBanner === 'function') refreshResumeBanner();
-    return;
-  }
+  // Load the now-active save (account-scoped after login, guest after logout).
+  // If it names a run, jump straight into it — this is what makes "Log in"
+  // on the front screen drop a returning player back into their game.
   const save = loadProgress();
   if (save && save.name) { resumeSavedRun(save); }
 };
@@ -320,6 +318,15 @@ function resumeSavedRun(save) {
 function initLogin() {
   renderAdventureGrid();
   renderAvatarGrid();
+
+  // "Already have an account? Log in" — opens the account modal right on the
+  // front screen. On success, PL_reloadActiveSave drops them into their run.
+  const returning = $('login-returning');
+  if (returning) returning.addEventListener('click', () => { if (window.Account) Account.openModal(); });
+  // Deep-link from the landing page ("Log in") — play.html?login=1 opens it.
+  try {
+    if (/[?&]login=1/.test(location.search) && window.Account) setTimeout(() => Account.openModal(), 350);
+  } catch (e) {}
 
   // Saved run? Offer to resume — cross-session return visits are where
   // spaced retrieval actually happens.
