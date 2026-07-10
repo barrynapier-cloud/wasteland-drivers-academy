@@ -1,5 +1,5 @@
 // ============================================================
-// WASTELAND DRIVERS ACADEMY — Trials of the Wastes
+// PERMIT LEGENDS — Trials of the Wastes
 // Side-quest hub: bite-size knowledge tests separate from the
 // chapter arc. Draws from the existing battle/quiz question banks.
 //   • Rapid Fire — 60 seconds, beat the clock, chase a high score.

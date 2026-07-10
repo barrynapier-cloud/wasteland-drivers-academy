@@ -1,5 +1,5 @@
 // ============================================================
-// WASTELAND DRIVERS ACADEMY — Card Database
+// PERMIT LEGENDS — Card Database
 // A collectible-card-game study deck for the WA State Driver Guide
 // ============================================================
 

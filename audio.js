@@ -1,5 +1,5 @@
 // ============================================================
-// WASTELAND DRIVERS ACADEMY — Audio engine
+// PERMIT LEGENDS — Audio engine
 // Pure Web Audio API synthesis (no asset files) + browser
 // SpeechSynthesis for demon voiceovers. Zero dependencies,
 // works offline, matches the no-build static stack.

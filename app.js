@@ -1,5 +1,5 @@
 // ============================================================
-// WASTELAND DRIVERS ACADEMY — Game v2
+// PERMIT LEGENDS — Game v2
 // Login → Intro → Map → Chapter Intro → Study → Quiz → Battle → Victory
 // ============================================================
 'use strict';
@@ -468,7 +468,7 @@ function renderMap() {
 
 function initMap() {
   $('hud-logout').addEventListener('click', () => {
-    if (!confirm("Restart your initiation? All sigils and XP reset.")) return;
+    if (!confirm("Restart from the beginning? Your progress and XP reset.")) return;
     clearProgress();                 // wipe the persisted run, not just memory
     revealedKeys.clear();
     if (window.Account && Account.clearCloud) Account.clearCloud(); // and the cloud copy

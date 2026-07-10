@@ -1,80 +1,71 @@
-# Wasteland Drivers Academy
+# Permit Legends
 
-A goth-anime-kawaii driving-school RPG for the Washington State written driver exam. Sanrio × Sanctum. Three drivers. Six demons. One license.
+A browser RPG that teaches the Washington State written driver exam. Beat the bosses, pass the test. Every number, sign, and law in the game is lifted straight from the official Washington Driver Guide — clear the game here, pass the exam there.
 
-## What it is
+One fact core, five fully reskinned worlds. Chapter 1 is free; the full run is a $20 one-time unlock.
 
-Every chapter of this game is a category on the Washington Driver Guide. Every demon is a number you must learn. Every law, sign, and figure is lifted straight from the official guide — pass the demons here, pass the exam there.
+## The five worlds
+
+Same questions, same six-chapter structure, totally different lore, art, characters, fonts, and voices:
+
+1. **Wasteland Academy** — goth-anime demon-slaying (the original)
+2. **Neon Circuit** — cyberpunk rogue-AI grid
+3. **Starbound Academy** — space-cadet sci-fi
+4. **Realm of Roads** — high-fantasy dragons and knights
+5. **Cruise Critters** — cozy pastel town (aimed younger)
+
+The fact core is sacred: only presentation (names, palette, marks, terms, fonts, boss/hero art and voices) is themed. Numbers and law never change between worlds.
 
 ## Stack
 
-Pure static HTML / CSS / JS. No framework. No build step. No localStorage (sandbox-blocked) — all state is in-memory.
+Pure static HTML / CSS / JS. No framework, no build step. Hosted on GitHub Pages at [permitlegends.com](https://permitlegends.com) — every push to `main` auto-deploys. The `CNAME` file in the repo root holds the custom-domain binding; do not delete it.
 
-- `index.html` — scenes: login, intro, map, chapter intro, study, quiz, battle, defeat, complete, trials hub, trial run, trial result
-- `styles.css` — design system, animations, battle stage
-- `app.js` — scene routing, player state, battle logic
-- `chapters.js` — six chapters with lessons, quizzes, boss data
-- `battle-questions.js` — 60+ question variants pulled randomly per battle
-- `quests.js` — Trials of the Wastes: Rapid Fire, Chapter Pop Quiz, Trial of Redemption, and the Final Reckoning mock exam
-- `audio.js` — procedural sound engine (Web Audio) + demon voiceovers (SpeechSynthesis)
-- `data.js` — supporting fixtures
-- `images/` — anime avatars, demon portraits, wasteland-styled signs
+- `index.html` — marketing landing page (pricing, guarantee, log-in link)
+- `play.html` — the game itself (scenes: login, intro, world/driver select, map, study, quiz, battle, defeat, complete, trials hub)
+- `styles.css` — design system + per-world card systems, animations, battle stage
+- `app.js` — scene routing, player state, battle logic, save/entitlement plumbing
+- `chapters.js` — six chapters: lessons, quizzes, boss data (the fact core)
+- `battle-questions.js` — question variants pulled randomly per battle
+- `quests.js` — quick-test hub: Rapid Fire, Chapter Pop Quiz, Trial of Redemption, Final Reckoning mock exam
+- `themes.js` — the five-world skin engine (palette, lore, terms, marks, fonts, cast) applied over the fact core
+- `voices.js` — written source of truth for every boss/hero line (drives both audio clips and the browser-voice fallback)
+- `audio.js` — Web Audio sound engine + voice playback
+- `account.js` — Firebase account layer (login, cross-device cloud save, entitlement)
+- `data.js` — supporting fixtures (e.g. the number ledger)
+- `images/`, `audio/`, `icons/` — per-world art, 200+ voice clips, PWA icons
+
+## Accounts & saving
+
+`account.js` talks to Firebase (Auth + Firestore). Kids sign in with a username + password (no real email needed — a synthetic `<name>@players.permitlegends.com` address is used under the hood). Progress saves to the cloud keyed to the account and follows them across devices; a signed-out player still gets a local save. Firestore rules are owner-only and make the paid `unlocked` flag server-writable only. Login is one tap from the front screen of the game and from the landing page.
+
+## Payments
+
+$20 one-time via a Stripe payment link. On success, a Cloudflare Worker (`webhook/worker.js`) verifies the Stripe signature and writes `unlocked = true` to the buyer's Firebase profile, which syncs to every device they log in on. A legacy per-device unlock code still exists as a belt-and-suspenders fallback. See `LAUNCH.md` for the full runbook and `SECURITY.md` for the security posture.
 
 ## Sound & voice
 
-All audio is synthesized at runtime. No asset files, no network, works offline.
+Every world has a full cast: 30 bosses (battle cry + strike taunts + defeat lines) and 16 heroes (intro on select + victory line), 200+ pre-rendered ElevenLabs clips, plus a synthesized Web Audio effects engine. `audio/manifest.json` lists which clips are present; anything missing falls back to the same written line via browser speech, so partial rollouts never go silent. Two HUD toggles: sound effects and character voice.
 
-- **Sound effects** — Web Audio API. UI clicks, correct/wrong stings, hero slashes, critical hits, boss counterstrikes, combo risers, victory fanfare, defeat dirge, level-up, sigil shimmer, and a Rapid Fire countdown.
-- **Full voice cast** — 212 pre-rendered ElevenLabs clips covering every character in every world. 30 bosses each get a battle cry, three strike taunts, and two defeat lines; 16 heroes each get an intro (on driver select) and a victory line. Every character has a distinct cast voice, no two colliding within a world, in a register tuned to the world (gothic opera, rogue-AI, cosmic warden, high-fantasy dragon, storybook rascal).
-  - The written cast lives in `voices.js` (source of truth for both audio and the browser-voice fallback).
-  - Clips are theme-namespaced: `audio/<theme>/<house>-cry|taunt0-2|defeat0-1.mp3` and `audio/heroes/<id>-intro|win.mp3`.
-  - `audio/manifest.json` lists every clip present; the engine plays a clip when listed and falls back to the browser SpeechSynthesis voice (same written line) otherwise, so partial rollouts never go silent.
-  - Regenerate any line by re-running its `voices.js` text through the ElevenLabs pipeline and adding the path to the manifest.
-- Two toggles in the map HUD: 🔊 sound effects and 🗣 demon voice. Audio unlocks on first interaction (browser autoplay policy).
+## Quick tests (trials hub)
 
-## Trials of the Wastes (quick tests)
+Reachable from the map, drawing on the same question banks as the boss fights:
 
-Reachable from the map. Bite-size knowledge checks that draw from the same question banks as the boss fights, with no HP or demons.
-
-- **Rapid Fire** — 60-second clock, answer as many as you can, streaks multiply the score. A wrong answer freezes the clock and holds the explanation until you resume — misses teach, speed stays free.
-- **Chapter Pop Quiz** — five fast questions on any unlocked house, graded, no boss battle.
-- **Trial of Redemption** — drills only the questions you have missed, anywhere in the game. Answer one right and its mark is erased from the ledger. Empty ledger = clean conscience.
-- **The Final Reckoning** — a mock written exam. 25 questions balanced across all six houses, no hints, no explanations, 80% to pass (same bar as the DOL). The verdict screen breaks your score down per house, flags your weakest house, and feeds every miss into the Trial of Redemption.
+- **Rapid Fire** — 60-second clock; a wrong answer freezes the clock and holds the explanation until you resume.
+- **Chapter Pop Quiz** — five fast questions on any unlocked chapter.
+- **Trial of Redemption** — drills only the questions you have missed anywhere; a later correct answer clears the mark.
+- **The Final Reckoning** — a 25-question mock exam balanced across all chapters, 80% to pass (the DOL bar), with a per-chapter score breakdown that flags your weakest area.
 
 ## Learning engine
 
-The RPG is a costume; underneath it runs on retrieval practice.
+The RPG is a costume; underneath it runs on retrieval practice — mistake ledger, per-chapter mastery bars, active-recall veiled numbers in study, cross-chapter tags on every miss, and full keyboard play. Rationale and citations live on the in-app Science page (`science.html`).
 
-- **Mistake ledger** — every wrong answer in every mode (quiz, battle, trial, exam) is recorded. A later correct answer to the same question, anywhere, redeems it.
-- **Mastery tracking** — per-house accuracy across all modes, shown as a mastery bar on each map tile.
-- **Active recall in study** — each lesson's key number starts veiled (label visible, number and supporting text blurred). Guess first, then tap to unveil. Guessing before seeing the answer measurably improves retention, even when the guess is wrong.
-- **House tags** — cross-house questions show which house they belong to, so a miss tells you exactly what to re-study.
-- **Keyboard play** — answer with A–D or 1–4, advance with Enter/Space, page study cards with arrow keys. Enter unveils a veiled number before it advances.
+## App-store builds
 
-## Drivers
-
-| Name           | Body              | Tagline                                          |
-| -------------- | ----------------- | ------------------------------------------------ |
-| Vex Halloran   | Petite · Wiry     | Speed is grace.                                  |
-| Mira Korvus    | Tall · Athletic   | Discipline is the only prayer.                   |
-| Saoirse Veil   | Soft · Curvy      | The road is a circle and I am at its center.    |
-
-## The Six Houses
-
-1. **Blood** — DUI, BAC, refusal. Boss: *The Refuser.* Reward: Sigil of Sobriety.
-2. **Ember** — Distraction, devices. Boss: *The Static Eye.* Reward: Mark of Clear Vision.
-3. **Static** — Pedestrians, school zones. Boss: *The Veil.* Reward: Eye of the Awake.
-4. **Iron** — Signs, signals, markings. Boss: *The Iron Reader.* Reward: Crest of the Reader.
-5. **Thorn** — Right-of-way, intersections. Boss: *Thorn-Crowned.* Reward: Lattice of First Passage.
-6. **Bone** — Final exam. Boss: *The Final Ledger.* Reward: Crown of the Final Ledger.
+A PWA layer (`manifest.json` + `sw.js` + `icons/`) makes the web app installable. Capacitor shells for iOS and Android are scaffolded locally (gitignored) for a paid-upfront store release. See `STORES.md`.
 
 ## Run locally
 
 ```bash
 python3 -m http.server 8765
-# open http://localhost:8765
+# open http://localhost:8765/play.html
 ```
-
-## Deploy
-
-Static drop — works on any static host (Vercel, Netlify, S3, GitHub Pages). No server required.

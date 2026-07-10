@@ -186,7 +186,7 @@ const Account = (() => {
       // reflect the account's save into the active game immediately
       if (window.PL_reloadActiveSave) window.PL_reloadActiveSave();
     }
-    const wrote = await writeSave(merged || p.save);
+    await writeSave(merged || p.save);
     profile = { unlocked: p.unlocked, save: merged || p.save };
     render();
     // Landing-page buy flow waits on sign-in to attach the UID to checkout.

@@ -3,18 +3,18 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>Wasteland Drivers Academy — A Goth Driving School RPG</title>
+  <title>Permit Legends — Play</title>
   <link rel="manifest" href="manifest.json" />
   <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="theme-color" content="#150305" />
 
-  <meta name="description" content="A goth-anime-kawaii RPG that teaches the Washington State Driver Guide. Study cards, take quiz challenges, battle demons, level up." />
+  <meta name="description" content="Permit Legends: beat the bosses, pass the Washington permit test. Five worlds, study cards, boss battles, and mock exams built on real WA Driver Guide law." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Inter:wght@400;500;600;700&family=Press+Start+2P&family=Orbitron:wght@600;800&family=Exo+2:wght@600;800&family=Baloo+2:wght@600;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="styles.css?v=20260710b" />
+  <link rel="stylesheet" href="styles.css?v=20260710c" />
 </head>
 <body>
   <div id="bg-decor" aria-hidden="true">
@@ -33,7 +33,7 @@
         <p class="login-sublabel">Five worlds. One exam. Pick your vibe.</p>
         <div class="adventure-grid" id="adventure-grid"></div>
         <p class="login-label" style="margin-top:22px">Choose your driver</p>
-        <p class="login-sublabel" id="avatar-sublabel">Three drivers. Three builds. One road.</p>
+        <p class="login-sublabel" id="avatar-sublabel">Pick your build. Same road, different ride.</p>
         <div class="avatar-grid" id="avatar-grid"></div>
         <label class="login-label" for="login-name" style="margin-top:22px">Name your driver</label>
         <input type="text" id="login-name" maxlength="20" placeholder="e.g. Rune, Echo, Saint" autocomplete="off" />
@@ -70,17 +70,17 @@
         <div class="how-step" style="--d:2">
           <div class="how-num">III</div>
           <h3>Boss Battle</h3>
-          <p>Face the demon. Correct = strike. Wrong = struck. HP on both sides.</p>
+          <p>Face the boss. Right answer = you strike. Wrong = you get struck. Both sides have HP.</p>
         </div>
         <div class="how-step" style="--d:3">
           <div class="how-num">IV</div>
           <h3>Reward</h3>
-          <p>Claim a sigil. Gain XP. Level up. Six sigils end the initiation.</p>
+          <p>Claim your reward. Gain XP. Level up. Clear all six to earn your license.</p>
         </div>
       </div>
 
       <div class="intro-key">
-        <strong>Rule of the Real World.</strong> Every number, sign, and law in this game is lifted straight from the Washington State Driver Guide. Beat the demons here. The test there is the same fight without the costumes.
+        <strong>Rule of the Real World.</strong> Every number, sign, and law in this game comes straight from the Washington State Driver Guide. Beat them here, and the real test is the same fight without the costumes.
       </div>
 
       <button class="primary-btn big" id="intro-continue">Enter the Map →</button>
@@ -101,7 +101,7 @@
       </div>
       <div class="hud-audio">
         <button class="audio-toggle" id="toggle-sfx" title="Sound effects" aria-label="Toggle sound effects">🔊</button>
-        <button class="audio-toggle" id="toggle-voice" title="Demon voice" aria-label="Toggle demon voice">🗣</button>
+        <button class="audio-toggle" id="toggle-voice" title="Character voice" aria-label="Toggle character voice">🗣</button>
       </div>
       <button class="ghost-btn small" id="hud-logout">↻ Restart</button>
     </header>
@@ -307,15 +307,15 @@
     <p>Built from the <a href="http://www.secureyourload.com/Documents/driverguide-en.pdf" target="_blank" rel="noopener">Washington State Driver Guide</a> · RCW <a href="https://app.leg.wa.gov/RCW/default.aspx?cite=46.61.502" target="_blank" rel="noopener">46.61.502</a>, <a href="https://app.leg.wa.gov/RCW/default.aspx?cite=46.61.503" target="_blank" rel="noopener">46.61.503</a>, <a href="https://app.leg.wa.gov/RCW/default.aspx?cite=46.61.185" target="_blank" rel="noopener">46.61.185</a>, <a href="https://app.leg.wa.gov/RCW/default.aspx?cite=46.61.673" target="_blank" rel="noopener">46.61.673</a> · Distraction stats: <a href="https://www.nsc.org/" target="_blank" rel="noopener">National Safety Council</a></p>
   </footer>
 
-  <script src="audio.js?v=20260710b"></script>
-  <script src="data.js?v=20260710b"></script>
-  <script src="chapters.js?v=20260710b"></script>
-  <script src="battle-questions.js?v=20260710b"></script>
-  <script src="voices.js?v=20260710b"></script>
-  <script src="themes.js?v=20260710b"></script>
-  <script src="quests.js?v=20260710b"></script>
-  <script src="account.js?v=20260710b"></script>
-  <script src="app.js?v=20260710b"></script>
+  <script src="audio.js?v=20260710c"></script>
+  <script src="data.js?v=20260710c"></script>
+  <script src="chapters.js?v=20260710c"></script>
+  <script src="battle-questions.js?v=20260710c"></script>
+  <script src="voices.js?v=20260710c"></script>
+  <script src="themes.js?v=20260710c"></script>
+  <script src="quests.js?v=20260710c"></script>
+  <script src="account.js?v=20260710c"></script>
+  <script src="app.js?v=20260710c"></script>
   <script>
     if ('serviceWorker' in navigator && location.protocol === 'https:') {
       navigator.serviceWorker.register('/sw.js').catch(() => {});
