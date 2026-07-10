@@ -31,30 +31,34 @@ self.addEventListener('fetch', (e) => {
 
   const isMedia = url.pathname.startsWith('/images/') || url.pathname.startsWith('/audio/');
 
+  const isNavigation = e.request.mode === 'navigate';
+
   if (isMedia) {
-    // cache-first
+    // cache-first; await the write so the entry is actually stored
     e.respondWith(
       caches.open(VERSION).then(async (c) => {
         const hit = await c.match(e.request, { ignoreSearch: true });
         if (hit) return hit;
         const res = await fetch(e.request);
-        if (res.ok) c.put(e.request, res.clone());
+        if (res.ok) await c.put(e.request, res.clone());
         return res;
       })
     );
   } else {
     // network-first for code and pages
     e.respondWith(
-      fetch(e.request).then((res) => {
-        if (res.ok) {
-          const clone = res.clone();
-          caches.open(VERSION).then(c => c.put(e.request, clone));
-        }
+      fetch(e.request).then(async (res) => {
+        if (res.ok) { const c = await caches.open(VERSION); await c.put(e.request, res.clone()); }
         return res;
-      }).catch(() =>
-        caches.open(VERSION).then(c => c.match(e.request, { ignoreSearch: true }))
-          .then(hit => hit || caches.match('/play.html'))
-      )
+      }).catch(async () => {
+        const c = await caches.open(VERSION);
+        const hit = await c.match(e.request, { ignoreSearch: true });
+        if (hit) return hit;
+        // Only fall back to the app shell for PAGE navigations — never return
+        // HTML in place of a missing .js/.css/.json (that breaks parsing).
+        if (isNavigation) return (await c.match('/play.html')) || Response.error();
+        return Response.error();
+      })
     );
   }
 });

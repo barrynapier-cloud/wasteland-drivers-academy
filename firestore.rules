@@ -1,9 +1,18 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // A player can read and write only their own save. Nobody else's.
     match /profiles/{uid} {
-      allow read, write: if request.auth != null && request.auth.uid == uid;
+      function isOwner() { return request.auth != null && request.auth.uid == uid; }
+      // Fields the CLIENT may write. `unlocked` is deliberately excluded —
+      // entitlement is set only by the Admin SDK (server / Stripe webhook),
+      // which bypasses rules. This closes the free-self-grant paywall bypass.
+      function clientFields() { return ['email', 'username', 'save', 'updatedAt']; }
+      function saveOk() { return !('save' in request.resource.data) || request.resource.data.save.size() < 200000; }
+
+      allow read:   if isOwner();
+      allow create: if isOwner() && request.resource.data.keys().hasOnly(clientFields()) && saveOk();
+      allow update: if isOwner() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(clientFields()) && saveOk();
+      allow delete: if isOwner();
     }
   }
 }

@@ -165,14 +165,18 @@ const Sound = (() => {
     }).catch(() => {});
   }
   let currentClip = null;
-  function playClip(path) {
+  // Returns true if a real clip exists and was started. If playback is
+  // rejected (autoplay block, decode error), the optional onFail fires so
+  // the browser-voice fallback still speaks the line.
+  function playClip(path, onFail) {
     if (!voiceOn || !clipSet.has(path)) return false;
     try {
       if (currentClip) { try { currentClip.pause(); } catch (e) {} }
       const a = new Audio(`audio/${path}.mp3`);
       a.volume = 0.95;
       currentClip = a;
-      a.play().catch(() => {});
+      a.play().catch(() => { if (typeof onFail === 'function') onFail(); });
+      a.addEventListener('error', () => { if (typeof onFail === 'function') onFail(); }, { once: true });
       return true;
     } catch (e) { return false; }
   }
@@ -207,7 +211,7 @@ const Sound = (() => {
   function bossCry(houseId) {
     const t = bank()[houseId];
     if (t) announce(t.cry);
-    if (playClip(`${currentThemeId}/${houseId}-cry`)) return;
+    if (playClip(`${currentThemeId}/${houseId}-cry`, () => t && say(t.cry, { pitch: 0.4, rate: 0.85 }))) return;
     if (t) say(t.cry, { pitch: 0.4, rate: 0.85 });
   }
   function bossTaunt(houseId) {
@@ -216,7 +220,7 @@ const Sound = (() => {
     const n = lines.length || 3;
     const i = Math.floor(Math.random() * n);
     if (lines.length) announce(lines[i] || lines[0]);
-    if (playClip(`${currentThemeId}/${houseId}-taunt${i}`)) return;
+    if (playClip(`${currentThemeId}/${houseId}-taunt${i}`, () => lines.length && say(lines[i] || lines[0], { pitch: 0.42, rate: 0.92 }))) return;
     if (lines.length) say(lines[i] || lines[0], { pitch: 0.42, rate: 0.92 });
   }
   function bossDefeat(houseId, fallbackText) {
@@ -225,7 +229,7 @@ const Sound = (() => {
     const n = lines.length || 1;
     const i = Math.floor(Math.random() * n);
     if (lines.length) announce(lines[i] || lines[0]);
-    if (playClip(`${currentThemeId}/${houseId}-defeat${i}`)) return;
+    if (playClip(`${currentThemeId}/${houseId}-defeat${i}`, () => lines.length && say(lines[i] || lines[0], { pitch: 0.5, rate: 0.82 }))) return;
     if (lines.length) say(lines[i] || lines[0], { pitch: 0.5, rate: 0.82 });
   }
 
@@ -236,7 +240,7 @@ const Sound = (() => {
     const cast = (window.VOICE_CAST && VOICE_CAST.heroes && VOICE_CAST.heroes[heroId]) || null;
     const line = cast && cast[kind];
     if (line) { try { if (window.PL_onHeroSpeak) window.PL_onHeroSpeak(line); } catch (e) {} }
-    if (playClip(`heroes/${heroId}-${kind}`)) return;
+    if (playClip(`heroes/${heroId}-${kind}`, () => line && say(line, { pitch: 1.0, rate: 1.0, deep: false }))) return;
     if (line) say(line, { pitch: 1.0, rate: 1.0, deep: false });
   }
 

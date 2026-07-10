@@ -68,7 +68,10 @@ const Quests = (() => {
   // HUB
   // ============================================================
   function openHub() {
-    const unlocked = CHAPTERS.filter((c, i) => i === 0 || player.completed[CHAPTERS[i - 1].id]);
+    // Pop-quiz chapters require BOTH progression and entitlement: chapter 1
+    // is free, everything after needs the unlock (else a free player who
+    // clears chapter 1 could reach chapter 2's paid question pool here).
+    const unlocked = CHAPTERS.filter((c, i) => (i === 0 || player.completed[CHAPTERS[i - 1].id]) && (i === 0 || paidTier()));
     const nMistakes = player.mistakes.length;
     const wrap = document.getElementById('trials-grid');
     wrap.innerHTML = `
@@ -253,7 +256,7 @@ const Quests = (() => {
     document.getElementById('trial-quit').addEventListener('click', quit);
 
     const signBlock = item.signImage
-      ? `<div class="q-sign"><img src="${item.signImage}" alt="${esc(item.signLabel || 'sign')}" /><p class="q-sign-label">${tmark()} ${esc(item.signLabel || 'Sign')} ${tmark()}</p></div>`
+      ? `<div class="q-sign"><img src="${esc(item.signImage)}" alt="${esc(item.signLabel || 'sign')}" /><p class="q-sign-label">${tmark()} ${esc(item.signLabel || 'Sign')} ${tmark()}</p></div>`
       : '';
     const tag = { rapid: 'Rapid Fire', pop: `${esc(q.chapterTitle || '')} · Pop Quiz`, redeem: 'Trial of Redemption', exam: 'The Final Reckoning' }[q.mode];
     // Cross-house modes show which house the question belongs to — it tells

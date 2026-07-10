@@ -95,7 +95,13 @@ const Account = (() => {
   }
   const signUp = (u, p) => authCall('signUp', u, p);
   const signIn = (u, p) => authCall('signInWithPassword', u, p);
-  function signOut() { storeSession(null); profile = null; render(); }
+  function signOut() {
+    storeSession(null); profile = null;
+    // Drop back to the guest save so the ex-user's run doesn't linger in the
+    // active game or get written to the shared guest key.
+    if (window.PL_reloadActiveSave) window.PL_reloadActiveSave();
+    render();
+  }
 
   // ---------- Firestore profile ----------
   const enc = (save) => JSON.stringify(save || null);
@@ -105,26 +111,33 @@ const Account = (() => {
     try { save = JSON.parse((f.save && f.save.stringValue) || 'null'); } catch (e) {}
     return { unlocked: !!(f.unlocked && f.unlocked.booleanValue), save };
   }
+  // Returns {unlocked, save} when the doc is read (or 404 = fresh account),
+  // or {error:true} when the read is UNCERTAIN (network / permission). The
+  // caller must never overwrite remote data on an uncertain read.
   async function fetchProfile() {
-    if (!session || !(await refreshIfNeeded())) return null;
+    if (!session || !(await refreshIfNeeded())) return { error: true };
     try {
       const r = await fetch(DOC(session.uid), { headers: { 'Authorization': `Bearer ${session.idToken}` } });
       if (r.status === 404) return { unlocked: false, save: null };
-      if (!r.ok) return null;
+      if (!r.ok) return { error: true };
       return docToProfile(await r.json());
-    } catch (e) { return null; }
+    } catch (e) { return { error: true }; }
   }
-  async function writeProfile(fields) {
+  // The client writes ONLY save + metadata via an update mask. `unlocked` is
+  // never sent — entitlement is server-granted (admin / Stripe webhook) and
+  // Firestore rules reject any client attempt to touch it.
+  async function writeSave(save) {
     if (!session || !(await refreshIfNeeded())) return false;
     const body = { fields: {
       email: { stringValue: session.email },
       username: { stringValue: session.username || '' },
-      unlocked: { booleanValue: !!fields.unlocked },
-      save: { stringValue: enc(fields.save) },
+      save: { stringValue: enc(save) },
       updatedAt: { timestampValue: new Date().toISOString() }
     } };
+    // updateMask keeps the write to these fields only — never clobbers unlocked.
+    const mask = ['email', 'username', 'save', 'updatedAt'].map(f => `updateMask.fieldPaths=${f}`).join('&');
     try {
-      const r = await fetch(DOC(session.uid), {
+      const r = await fetch(`${DOC(session.uid)}?${mask}`, {
         method: 'PATCH', headers: { 'Authorization': `Bearer ${session.idToken}`, 'Content-Type': 'application/json' },
         body: JSON.stringify(body)
       });
@@ -152,21 +165,29 @@ const Account = (() => {
     return merged;
   }
 
+  const acctKey = () => 'pl_save__' + session.uid;
+  const readLocalSave = () => { try { return JSON.parse(localStorage.getItem(acctKey()) || 'null'); } catch (e) { return null; } };
+  const writeLocalSave = (s) => { try { localStorage.setItem(acctKey(), JSON.stringify(s)); } catch (e) {} };
+
   async function afterLogin() {
-    profile = await fetchProfile() || { unlocked: false, save: null };
-    let local = null;
-    try { local = JSON.parse(localStorage.getItem('pl_save') || 'null'); } catch (e) {}
-    const merged = mergeSaves(local, profile.save);
-    if (merged) { try { localStorage.setItem('pl_save', JSON.stringify(merged)); } catch (e) {} }
-    // A valid unlock code on this device grants the ACCOUNT the entitlement
-    let unlocked = profile.unlocked;
-    try {
-      const code = localStorage.getItem('pl_unlock') || '';
-      if (!unlocked && typeof validCode === 'function' && validCode(code)) unlocked = true;
-      if (window.PL_NATIVE_PAID === true) unlocked = true; // paid store app
-    } catch (e) {}
-    await writeProfile({ unlocked, save: merged || profile.save });
-    profile = { unlocked, save: merged };
+    const p = await fetchProfile();
+    if (p.error) {
+      // Uncertain read — do NOT touch remote or local. Keep prior known state.
+      profile = profile || { unlocked: false, save: null };
+      render();
+      return;
+    }
+    profile = p;
+    // Merge cloud with THIS ACCOUNT'S local save only — never a guest's save,
+    // so two kids on one device can't inherit each other's progress.
+    const merged = mergeSaves(readLocalSave(), p.save);
+    if (merged) {
+      writeLocalSave(merged);
+      // reflect the account's save into the active game immediately
+      if (window.PL_reloadActiveSave) window.PL_reloadActiveSave();
+    }
+    const wrote = await writeSave(merged || p.save);
+    profile = { unlocked: p.unlocked, save: merged || p.save };
     render();
   }
 
@@ -174,14 +195,19 @@ const Account = (() => {
     if (!enabled() || !session) return;
     clearTimeout(pushTimer);
     pushTimer = setTimeout(async () => {
-      let local = null;
-      try { local = JSON.parse(localStorage.getItem('pl_save') || 'null'); } catch (e) {}
-      if (local) await writeProfile({ unlocked: !!(profile && profile.unlocked), save: local });
+      const local = readLocalSave();
+      if (local) await writeSave(local);
     }, 2500);
+  }
+
+  async function clearCloud() {
+    if (!enabled() || !session) return;
+    if (await refreshIfNeeded()) await writeSave(null);
   }
 
   const isUnlocked = () => !!(profile && profile.unlocked);
   const who = () => (session && (session.username || session.email)) || null;
+  const uid = () => (session && session.uid) || null;
 
   // ---------- UI ----------
   function ensureModal() {
@@ -261,20 +287,21 @@ const Account = (() => {
     if (!enabled()) return;
     loadSession();
     if (session && await refreshIfNeeded()) {
-      profile = await fetchProfile();
-      // pull newer cloud save into this device on boot
-      if (profile && profile.save) {
-        let local = null;
-        try { local = JSON.parse(localStorage.getItem('pl_save') || 'null'); } catch (e) {}
-        const merged = mergeSaves(local, profile.save);
-        if (merged) { try { localStorage.setItem('pl_save', JSON.stringify(merged)); } catch (e) {} }
+      const p = await fetchProfile();
+      if (!p.error) {
+        profile = p;
+        // pull newer cloud save into this account's local key on boot
+        if (p.save) {
+          const merged = mergeSaves(readLocalSave(), p.save);
+          if (merged) { writeLocalSave(merged); if (window.PL_reloadActiveSave) window.PL_reloadActiveSave(); }
+        }
       }
     }
     mountHudButton();
     render();
   }
 
-  return { init, openModal, schedulePush, isUnlocked, email: who, signOut, signIn, signUp };
+  return { init, openModal, schedulePush, isUnlocked, email: who, uid, clearCloud, signOut, signIn, signUp };
 })();
 
 window.Account = Account;

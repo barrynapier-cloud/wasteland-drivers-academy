@@ -59,9 +59,17 @@ function isPaid() {
   try { return validCode(localStorage.getItem('pl_unlock') || ''); } catch (e) { return false; }
 }
 
+// Saves are namespaced per signed-in account so two kids on one family
+// device never merge into each other. Guests use the bare key.
+function plSaveKey() {
+  try { const u = window.Account && Account.uid && Account.uid(); return u ? ('pl_save__' + u) : 'pl_save'; }
+  catch (e) { return 'pl_save'; }
+}
+window.plSaveKey = plSaveKey;
+
 function saveProgress() {
   try {
-    localStorage.setItem('pl_save', JSON.stringify({
+    localStorage.setItem(plSaveKey(), JSON.stringify({
       name: player.name, avatar: player.avatar, themeId: player.themeId || 'wasteland',
       xp: player.xp, level: player.level, bestStreak: player.bestStreak,
       sigils: player.sigils, completed: player.completed, stats: player.stats,
@@ -71,9 +79,22 @@ function saveProgress() {
   if (window.Account && Account.schedulePush) Account.schedulePush();
 }
 function loadProgress() {
-  try { const raw = localStorage.getItem('pl_save'); return raw ? JSON.parse(raw) : null; } catch (e) { return null; }
+  try { const raw = localStorage.getItem(plSaveKey()); return raw ? JSON.parse(raw) : null; } catch (e) { return null; }
 }
-function clearProgress() { try { localStorage.removeItem('pl_save'); } catch (e) {} }
+function clearProgress() { try { localStorage.removeItem(plSaveKey()); } catch (e) {} }
+
+// Called by the account layer after login/logout so the running game reflects
+// the now-active save (account-scoped when signed in, guest when signed out).
+// Only re-enters if we're past the login screen and the active save differs.
+window.PL_reloadActiveSave = function () {
+  const onLogin = $('scene-login') && $('scene-login').classList.contains('active');
+  if (onLogin) { // refresh the resume banner if present
+    if (typeof refreshResumeBanner === 'function') refreshResumeBanner();
+    return;
+  }
+  const save = loadProgress();
+  if (save && save.name) { resumeSavedRun(save); }
+};
 
 // ---------- Learning ledger ----------
 // Every answered question in every mode flows through here.
@@ -441,6 +462,9 @@ function renderMap() {
 function initMap() {
   $('hud-logout').addEventListener('click', () => {
     if (!confirm("Restart your initiation? All sigils and XP reset.")) return;
+    clearProgress();                 // wipe the persisted run, not just memory
+    revealedKeys.clear();
+    if (window.Account && Account.clearCloud) Account.clearCloud(); // and the cloud copy
     Object.assign(player, { name: "", avatar: null, xp: 0, level: 1, bestStreak: 0, sigils: [], completed: {}, stats: {}, mistakes: [] });
     $('login-name').value = "";
     document.querySelectorAll('.avatar-pick').forEach(p => p.classList.remove('selected'));
@@ -620,7 +644,7 @@ function renderQuizQuestion() {
 
   const signBlock = q.signImage
     ? `<div class="q-sign">
-         <img src="${q.signImage}" alt="${esc(q.signLabel || 'sign')}" />
+         <img src="${esc(q.signImage)}" alt="${esc(q.signLabel || 'sign')}" />
          <p class="q-sign-label">${tmark()} ${esc(q.signLabel || 'Sign')} ${tmark()}</p>
        </div>`
     : '';
