@@ -147,6 +147,7 @@
           <li>Progress saves on the device, works in any phone or laptop browser</li>
         </ul>
         <a class="btn btn-primary" id="buy-btn" href="https://buy.stripe.com/5kQ5kw9Hr9To7D31SweAg00">Unlock All 5 Worlds for $20</a>
+        <p class="redeem" id="buy-acct-note"></p>
         <div class="guarantee"><strong>The deal, in plain English.</strong> Your kid finishes all six chapters and the mock exams. If they then walk into the DOL and fail the real Washington knowledge test, email us the receipt and the full $20 comes back. No forms, no argument. We can make that promise because a kid who has cleared their Mistake Ledger and passed the mock at 80 percent has already passed this test. The DOL visit just makes it official.</div>
         <p class="ps-note"><strong>P.S.</strong> You do not have to decide anything today. Chapter 1 is free, no account, no card. Hand your kid the phone tonight and see if they keep playing. If they do, come back and unlock the rest for $20. And if they finish it all and still fail the real test, the $20 comes back. That is the entire deal.</p>
         <p class="redeem">Already paid? <a href="unlock.html">Enter your access code</a></p>
@@ -162,6 +163,38 @@
     if ('serviceWorker' in navigator && location.protocol === 'https:') {
       navigator.serviceWorker.register('/sw.js').catch(() => {});
     }
+  </script>
+  <script src="account.js?v=20260710a"></script>
+  <script>
+    // Tie the purchase to the buyer's Firebase account so the webhook can
+    // unlock it on every device. If signed in, pass their UID to Stripe;
+    // if not, nudge them to make a free account first (cross-device unlock).
+    (function () {
+      const buy = document.getElementById('buy-btn');
+      const note = document.getElementById('buy-acct-note');
+      const base = buy.getAttribute('href');
+      function uid() { try { const s = JSON.parse(localStorage.getItem('pl_session') || 'null'); return s && s.uid; } catch (e) { return null; } }
+      function refresh() {
+        const u = uid();
+        if (u) {
+          buy.href = base + (base.includes('?') ? '&' : '?') + 'client_reference_id=' + encodeURIComponent(u);
+          if (note) note.innerHTML = '✓ Signed in — this unlock will sync to every device you log into.';
+        } else {
+          buy.href = base;
+          if (note) note.innerHTML = 'Want it on every device? <a href="#" id="buy-signin">Create a free account</a> before you buy.';
+          const si = document.getElementById('buy-signin');
+          if (si) si.addEventListener('click', (e) => {
+            e.preventDefault();
+            if (window.Account && Account.openModal) {
+              window.PL_afterAuth = () => { refresh(); const m = document.getElementById('account-modal'); if (m) m.classList.remove('open'); note.innerHTML += '<br>✓ Account ready — tap Unlock above.'; };
+              Account.openModal();
+            }
+          });
+        }
+      }
+      // account.js inits on DOMContentLoaded; run after it so the session is loaded
+      setTimeout(refresh, 300);
+    })();
   </script>
 </body>
 </html>

@@ -189,6 +189,8 @@ const Account = (() => {
     const wrote = await writeSave(merged || p.save);
     profile = { unlocked: p.unlocked, save: merged || p.save };
     render();
+    // Landing-page buy flow waits on sign-in to attach the UID to checkout.
+    if (window.PL_afterAuth) { const cb = window.PL_afterAuth; window.PL_afterAuth = null; try { cb(); } catch (e) {} }
   }
 
   function schedulePush() {
