@@ -1,38 +1,54 @@
 // ============================================================
-// PERMIT LEGENDS — Accounts + cloud sync (optional layer)
-// Email magic-code login via Supabase Auth REST, progress sync to a
-// `profiles` row, entitlement that follows the player across devices.
+// PERMIT LEGENDS — Accounts + cloud sync (Firebase edition)
+// Username + password accounts (the pattern every kid knows) via
+// Firebase Auth REST; progress lives in a Firestore `profiles/{uid}`
+// doc guarded by owner-only security rules.
 //
 // Design rules:
 //  - Anonymous play stays first-class. No feature requires an account.
-//  - Zero client dependencies: plain fetch against Supabase REST.
-//  - If PL_BACKEND is unconfigured or unreachable, every hook is a
-//    silent no-op and the game behaves exactly as before.
+//  - Zero client dependencies: plain fetch against Google REST APIs.
+//  - Usernames without an @ become synthetic emails
+//    (<slug>@players.permitlegends.com) so kids don't need email.
 //  - Local save remains the source of truth mid-session; the cloud is
 //    a mirror, merged on login (union of progress, best of totals).
 // ============================================================
 'use strict';
 
-// Filled at deploy time; empty url disables the whole layer.
 window.PL_BACKEND = window.PL_BACKEND || {
-  url: '',   // e.g. https://xxxx.supabase.co
-  key: ''    // publishable/anon key (safe for client)
+  apiKey: 'AIzaSyCm4G2o9XcPHC5pR-XLW2rKnkqHhBIdL8U', // public client key
+  projectId: 'permitlegends'
 };
 
 const Account = (() => {
   const cfg = () => window.PL_BACKEND || {};
-  const enabled = () => !!(cfg().url && cfg().key);
-  const H = (session) => {
-    const h = { 'apikey': cfg().key, 'Content-Type': 'application/json' };
-    if (session) h['Authorization'] = `Bearer ${session.access_token}`;
-    return h;
-  };
+  const enabled = () => !!(cfg().apiKey && cfg().projectId);
+  const AUTH = () => `https://identitytoolkit.googleapis.com/v1`;
+  const DOC = (uid) => `https://firestore.googleapis.com/v1/projects/${cfg().projectId}/databases/(default)/documents/profiles/${uid}`;
 
-  let session = null;      // {access_token, refresh_token, user:{id,email}, expires_at}
-  let profile = null;      // {unlocked, save}
+  let session = null;   // {idToken, refreshToken, uid, email, username, exp}
+  let profile = null;   // {unlocked, save}
   let pushTimer = null;
 
-  // ---------- session persistence ----------
+  // ---------- helpers ----------
+  const slugify = (u) => (u || '').toLowerCase().replace(/[^a-z0-9._-]/g, '').slice(0, 30);
+  function toEmail(usernameOrEmail) {
+    const v = (usernameOrEmail || '').trim();
+    if (v.includes('@')) return v.toLowerCase();
+    const s = slugify(v);
+    return s ? `${s}@players.permitlegends.com` : '';
+  }
+  const AUTH_ERRORS = {
+    EMAIL_EXISTS: 'That username is taken. Try signing in instead.',
+    EMAIL_NOT_FOUND: 'No account with that name. Try Create Account.',
+    INVALID_LOGIN_CREDENTIALS: 'Wrong username or password.',
+    INVALID_PASSWORD: 'Wrong password.',
+    WEAK_PASSWORD: 'Password needs at least 6 characters.',
+    'WEAK_PASSWORD : Password should be at least 6 characters': 'Password needs at least 6 characters.',
+    TOO_MANY_ATTEMPTS_TRY_LATER: 'Too many tries. Wait a minute and try again.'
+  };
+  const friendly = (code) => AUTH_ERRORS[code] || AUTH_ERRORS[(code || '').split(':')[0].trim()] || 'Something went wrong. Try again.';
+
+  // ---------- session ----------
   function loadSession() {
     try { session = JSON.parse(localStorage.getItem('pl_session') || 'null'); } catch (e) { session = null; }
     return session;
@@ -41,88 +57,87 @@ const Account = (() => {
     session = s;
     try { s ? localStorage.setItem('pl_session', JSON.stringify(s)) : localStorage.removeItem('pl_session'); } catch (e) {}
   }
-
   async function refreshIfNeeded() {
     if (!session) return false;
-    const now = Math.floor(Date.now() / 1000);
-    if (session.expires_at && session.expires_at - now > 60) return true;
+    if (session.exp && session.exp - Math.floor(Date.now() / 1000) > 120) return true;
     try {
-      const r = await fetch(`${cfg().url}/auth/v1/token?grant_type=refresh_token`, {
-        method: 'POST', headers: H(),
-        body: JSON.stringify({ refresh_token: session.refresh_token })
+      const r = await fetch(`https://securetoken.googleapis.com/v1/token?key=${cfg().apiKey}`, {
+        method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: `grant_type=refresh_token&refresh_token=${encodeURIComponent(session.refreshToken)}`
       });
-      if (!r.ok) { storeSession(null); return false; }
       const d = await r.json();
-      storeSession({ access_token: d.access_token, refresh_token: d.refresh_token, user: d.user, expires_at: Math.floor(Date.now() / 1000) + (d.expires_in || 3600) });
+      if (!r.ok || !d.id_token) { storeSession(null); return false; }
+      storeSession({ ...session, idToken: d.id_token, refreshToken: d.refresh_token, uid: d.user_id, exp: Math.floor(Date.now() / 1000) + (+d.expires_in || 3600) });
       return true;
     } catch (e) { return false; }
   }
 
   // ---------- auth ----------
-  async function requestCode(email) {
-    if (!enabled()) return { ok: false, err: 'accounts not configured' };
+  async function authCall(endpoint, usernameOrEmail, password) {
+    const email = toEmail(usernameOrEmail);
+    if (!email) return { ok: false, err: 'Pick a username first.' };
+    if ((password || '').length < 6) return { ok: false, err: 'Password needs at least 6 characters.' };
     try {
-      const r = await fetch(`${cfg().url}/auth/v1/otp`, {
-        method: 'POST', headers: H(),
-        body: JSON.stringify({ email, create_user: true })
+      const r = await fetch(`${AUTH()}/accounts:${endpoint}?key=${cfg().apiKey}`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password, returnSecureToken: true })
       });
-      if (!r.ok) { const e = await r.json().catch(() => ({})); return { ok: false, err: e.msg || e.error_description || 'could not send code' }; }
-      return { ok: true };
-    } catch (e) { return { ok: false, err: 'network error' }; }
-  }
-
-  async function verifyCode(email, token) {
-    if (!enabled()) return { ok: false, err: 'accounts not configured' };
-    try {
-      const r = await fetch(`${cfg().url}/auth/v1/verify`, {
-        method: 'POST', headers: H(),
-        body: JSON.stringify({ type: 'email', email, token })
+      const d = await r.json();
+      if (!r.ok) return { ok: false, err: friendly(d.error && d.error.message) };
+      storeSession({
+        idToken: d.idToken, refreshToken: d.refreshToken, uid: d.localId,
+        email, username: usernameOrEmail.includes('@') ? email : usernameOrEmail.trim(),
+        exp: Math.floor(Date.now() / 1000) + (+d.expiresIn || 3600)
       });
-      const d = await r.json().catch(() => ({}));
-      if (!r.ok || !d.access_token) return { ok: false, err: d.msg || d.error_description || 'wrong code' };
-      storeSession({ access_token: d.access_token, refresh_token: d.refresh_token, user: d.user, expires_at: Math.floor(Date.now() / 1000) + (d.expires_in || 3600) });
       await afterLogin();
       return { ok: true };
-    } catch (e) { return { ok: false, err: 'network error' }; }
+    } catch (e) { return { ok: false, err: 'Network error. Check the connection.' }; }
   }
+  const signUp = (u, p) => authCall('signUp', u, p);
+  const signIn = (u, p) => authCall('signInWithPassword', u, p);
+  function signOut() { storeSession(null); profile = null; render(); }
 
-  // Magic-link return: play.html#access_token=...&refresh_token=...
-  async function adoptHashSession() {
-    if (!enabled() || !location.hash.includes('access_token=')) return false;
-    const p = new URLSearchParams(location.hash.slice(1));
-    const at = p.get('access_token'), rt = p.get('refresh_token');
-    if (!at) return false;
-    history.replaceState(null, '', location.pathname + location.search);
-    try {
-      const r = await fetch(`${cfg().url}/auth/v1/user`, { headers: { ...H(), 'Authorization': `Bearer ${at}` } });
-      const user = await r.json();
-      if (!r.ok || !user.id) return false;
-      storeSession({ access_token: at, refresh_token: rt, user, expires_at: Math.floor(Date.now() / 1000) + 3600 });
-      await afterLogin();
-      return true;
-    } catch (e) { return false; }
+  // ---------- Firestore profile ----------
+  const enc = (save) => JSON.stringify(save || null);
+  function docToProfile(doc) {
+    const f = (doc && doc.fields) || {};
+    let save = null;
+    try { save = JSON.parse((f.save && f.save.stringValue) || 'null'); } catch (e) {}
+    return { unlocked: !!(f.unlocked && f.unlocked.booleanValue), save };
   }
-
-  function signOut() {
-    storeSession(null);
-    profile = null;
-    render();
-  }
-
-  // ---------- profile: fetch / merge / push ----------
   async function fetchProfile() {
-    if (!session) return null;
-    const r = await fetch(`${cfg().url}/rest/v1/profiles?id=eq.${session.user.id}&select=unlocked,save`, { headers: H(session) });
-    if (!r.ok) return null;
-    const rows = await r.json();
-    return rows[0] || null;
+    if (!session || !(await refreshIfNeeded())) return null;
+    try {
+      const r = await fetch(DOC(session.uid), { headers: { 'Authorization': `Bearer ${session.idToken}` } });
+      if (r.status === 404) return { unlocked: false, save: null };
+      if (!r.ok) return null;
+      return docToProfile(await r.json());
+    } catch (e) { return null; }
+  }
+  async function writeProfile(fields) {
+    if (!session || !(await refreshIfNeeded())) return false;
+    const body = { fields: {
+      email: { stringValue: session.email },
+      username: { stringValue: session.username || '' },
+      unlocked: { booleanValue: !!fields.unlocked },
+      save: { stringValue: enc(fields.save) },
+      updatedAt: { timestampValue: new Date().toISOString() }
+    } };
+    try {
+      const r = await fetch(DOC(session.uid), {
+        method: 'PATCH', headers: { 'Authorization': `Bearer ${session.idToken}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+      return r.ok;
+    } catch (e) { return false; }
   }
 
   function mergeSaves(local, remote) {
     if (!remote) return local;
     if (!local || !local.name) return remote;
-    const merged = { ...((remote.xp || 0) + Object.keys(remote.completed || {}).length * 1000 >
-                        (local.xp || 0) + Object.keys(local.completed || {}).length * 1000 ? remote : local) };
+    const localScore = (local.xp || 0) + Object.keys(local.completed || {}).length * 1000;
+    const remoteScore = (remote.xp || 0) + Object.keys(remote.completed || {}).length * 1000;
+    const merged = { ...(remoteScore > localScore ? remote : local) };
     merged.completed = { ...(local.completed || {}), ...(remote.completed || {}) };
     merged.xp = Math.max(local.xp || 0, remote.xp || 0);
     merged.level = Math.max(local.level || 1, remote.level || 1);
@@ -138,49 +153,37 @@ const Account = (() => {
   }
 
   async function afterLogin() {
-    profile = await fetchProfile();
-    // Merge cloud save with whatever this device has
+    profile = await fetchProfile() || { unlocked: false, save: null };
     let local = null;
     try { local = JSON.parse(localStorage.getItem('pl_save') || 'null'); } catch (e) {}
-    const merged = mergeSaves(local, profile && profile.save);
+    const merged = mergeSaves(local, profile.save);
     if (merged) { try { localStorage.setItem('pl_save', JSON.stringify(merged)); } catch (e) {} }
-    // A valid local unlock code grants the ACCOUNT the entitlement too
-    let unlocked = !!(profile && profile.unlocked);
+    // A valid unlock code on this device grants the ACCOUNT the entitlement
+    let unlocked = profile.unlocked;
     try {
       const code = localStorage.getItem('pl_unlock') || '';
       if (!unlocked && typeof validCode === 'function' && validCode(code)) unlocked = true;
+      if (window.PL_NATIVE_PAID === true) unlocked = true; // paid store app
     } catch (e) {}
-    await upsertProfile({ unlocked, save: merged || (profile && profile.save) || null });
+    await writeProfile({ unlocked, save: merged || profile.save });
     profile = { unlocked, save: merged };
     render();
   }
 
-  async function upsertProfile(fields) {
-    if (!session || !(await refreshIfNeeded())) return;
-    try {
-      await fetch(`${cfg().url}/rest/v1/profiles`, {
-        method: 'POST',
-        headers: { ...H(session), 'Prefer': 'resolution=merge-duplicates,return=minimal' },
-        body: JSON.stringify([{ id: session.user.id, email: session.user.email, updated_at: new Date().toISOString(), ...fields }])
-      });
-    } catch (e) { /* offline — local save still holds */ }
-  }
-
-  // Debounced push, called from the game's saveProgress
   function schedulePush() {
     if (!enabled() || !session) return;
     clearTimeout(pushTimer);
     pushTimer = setTimeout(async () => {
       let local = null;
       try { local = JSON.parse(localStorage.getItem('pl_save') || 'null'); } catch (e) {}
-      if (local) await upsertProfile({ save: local });
+      if (local) await writeProfile({ unlocked: !!(profile && profile.unlocked), save: local });
     }, 2500);
   }
 
   const isUnlocked = () => !!(profile && profile.unlocked);
-  const email = () => (session && session.user && session.user.email) || null;
+  const who = () => (session && (session.username || session.email)) || null;
 
-  // ---------- minimal UI ----------
+  // ---------- UI ----------
   function ensureModal() {
     if (document.getElementById('account-modal')) return;
     const m = document.createElement('div');
@@ -189,19 +192,14 @@ const Account = (() => {
       <div class="acct-bg" id="acct-bg"></div>
       <div class="acct-card">
         <button class="acct-close" id="acct-close" aria-label="Close">×</button>
-        <div id="acct-step-email">
+        <div id="acct-step-auth">
           <h3 class="acct-title">Save your run everywhere</h3>
-          <p class="acct-sub">Enter an email and we'll send a 6-digit code. Your progress and unlock follow you to any phone or computer.</p>
-          <input id="acct-email" type="email" placeholder="you@example.com" autocomplete="email" />
-          <button class="primary-btn" id="acct-send">Send Code →</button>
-          <p class="acct-msg" id="acct-msg-1"></p>
-        </div>
-        <div id="acct-step-code" class="hidden">
-          <h3 class="acct-title">Check your email</h3>
-          <p class="acct-sub">Enter the 6-digit code (or tap the link in the email on this device).</p>
-          <input id="acct-code" inputmode="numeric" maxlength="6" placeholder="123456" />
-          <button class="primary-btn" id="acct-verify">Sign In →</button>
-          <p class="acct-msg" id="acct-msg-2"></p>
+          <p class="acct-sub">Pick a username and password. Your progress and unlock follow you to any phone or computer.</p>
+          <input id="acct-user" placeholder="username" autocomplete="username" autocapitalize="off" />
+          <input id="acct-pass" type="password" placeholder="password (6+ characters)" autocomplete="current-password" />
+          <button class="primary-btn" id="acct-signin">Sign In →</button>
+          <button class="ghost-btn" id="acct-signup">Create Account</button>
+          <p class="acct-msg" id="acct-msg"></p>
         </div>
         <div id="acct-step-in" class="hidden">
           <h3 class="acct-title">Signed in</h3>
@@ -214,43 +212,35 @@ const Account = (() => {
     const close = () => m.classList.remove('open');
     document.getElementById('acct-close').addEventListener('click', close);
     document.getElementById('acct-bg').addEventListener('click', close);
-    document.getElementById('acct-send').addEventListener('click', async () => {
-      const em = document.getElementById('acct-email').value.trim();
-      const msg = document.getElementById('acct-msg-1');
-      if (!/.+@.+\..+/.test(em)) { msg.textContent = 'That email looks off.'; return; }
-      msg.textContent = 'Sending…';
-      const r = await requestCode(em);
-      if (r.ok) {
-        m.dataset.email = em;
-        document.getElementById('acct-step-email').classList.add('hidden');
-        document.getElementById('acct-step-code').classList.remove('hidden');
-      } else msg.textContent = r.err;
-    });
-    document.getElementById('acct-verify').addEventListener('click', async () => {
-      const msg = document.getElementById('acct-msg-2');
-      msg.textContent = 'Checking…';
-      const r = await verifyCode(m.dataset.email, document.getElementById('acct-code').value.trim());
-      if (r.ok) showStep('in'); else msg.textContent = r.err;
-    });
-    document.getElementById('acct-signout').addEventListener('click', () => { signOut(); showStep('email'); });
+    const msg = () => document.getElementById('acct-msg');
+    const go = async (fn) => {
+      msg().textContent = 'One sec…';
+      const r = await fn(document.getElementById('acct-user').value, document.getElementById('acct-pass').value);
+      if (r.ok) { showStep('in'); msg().textContent = ''; } else msg().textContent = r.err;
+    };
+    document.getElementById('acct-signin').addEventListener('click', () => go(signIn));
+    document.getElementById('acct-signup').addEventListener('click', () => go(signUp));
+    document.getElementById('acct-pass').addEventListener('keydown', (e) => { if (e.key === 'Enter') go(signIn); });
+    document.getElementById('acct-signout').addEventListener('click', () => { signOut(); showStep('auth'); });
   }
   function showStep(step) {
-    ['email', 'code', 'in'].forEach(s => document.getElementById(`acct-step-${s}`).classList.toggle('hidden', s !== step));
+    ['auth', 'in'].forEach(s => document.getElementById(`acct-step-${s}`).classList.toggle('hidden', s !== step));
     if (step === 'in') {
-      document.getElementById('acct-who').textContent = email() || '';
-      document.getElementById('acct-ent').textContent = isUnlocked() ? '✦ Full version unlocked on this account' : 'Free tier — unlock once, play everywhere';
+      document.getElementById('acct-who').textContent = who() || '';
+      document.getElementById('acct-ent').textContent = isUnlocked()
+        ? '✦ Full version unlocked on this account'
+        : 'Free tier — unlock once, play everywhere';
     }
   }
   function openModal() {
     if (!enabled()) return;
     ensureModal();
-    showStep(session ? 'in' : 'email');
+    showStep(session ? 'in' : 'auth');
     document.getElementById('account-modal').classList.add('open');
   }
   function render() {
     const btn = document.getElementById('acct-hud-btn');
     if (btn) btn.textContent = session ? '☁ ✓' : '☁ Save';
-    // Re-render the map if visible so entitlement changes take effect
     if (typeof renderMap === 'function' && document.getElementById('scene-map') &&
         document.getElementById('scene-map').classList.contains('active')) renderMap();
   }
@@ -270,15 +260,21 @@ const Account = (() => {
   async function init() {
     if (!enabled()) return;
     loadSession();
-    const adopted = await adoptHashSession();
-    if (!adopted && session && await refreshIfNeeded()) {
+    if (session && await refreshIfNeeded()) {
       profile = await fetchProfile();
+      // pull newer cloud save into this device on boot
+      if (profile && profile.save) {
+        let local = null;
+        try { local = JSON.parse(localStorage.getItem('pl_save') || 'null'); } catch (e) {}
+        const merged = mergeSaves(local, profile.save);
+        if (merged) { try { localStorage.setItem('pl_save', JSON.stringify(merged)); } catch (e) {} }
+      }
     }
     mountHudButton();
     render();
   }
 
-  return { init, openModal, schedulePush, isUnlocked, email, signOut };
+  return { init, openModal, schedulePush, isUnlocked, email: who, signOut, signIn, signUp };
 })();
 
 window.Account = Account;
