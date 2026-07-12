@@ -7,7 +7,7 @@
 //     new art ships under new filenames or themes).
 // Bump VERSION on breaking cache-shape changes.
 // ============================================================
-const VERSION = 'pl-v1';
+const VERSION = 'pl-v2';
 const CORE = [
   '/play.html',
   '/index.html',
@@ -34,15 +34,22 @@ self.addEventListener('fetch', (e) => {
   const isNavigation = e.request.mode === 'navigate';
 
   if (isMedia) {
-    // cache-first; await the write so the entry is actually stored
+    // cache-first. Media elements (Audio/video) send Range headers and the
+    // server may answer 206 Partial Content; cache.put() THROWS on 206 and
+    // that rejection turns into net::ERR_FAILED for the whole request —
+    // this silently killed every voice clip. So: only cache full 200
+    // responses, never let a cache write take down playback, and if the
+    // cache layer itself fails, fall through to a plain network fetch.
     e.respondWith(
       caches.open(VERSION).then(async (c) => {
         const hit = await c.match(e.request, { ignoreSearch: true });
         if (hit) return hit;
         const res = await fetch(e.request);
-        if (res.ok) await c.put(e.request, res.clone());
+        if (res.status === 200) {
+          try { await c.put(e.request, res.clone()); } catch (err) { /* opaque/quota — play on */ }
+        }
         return res;
-      })
+      }).catch(() => fetch(e.request))
     );
   } else {
     // network-first for code and pages
