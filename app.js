@@ -915,6 +915,9 @@ function renderBattleQuestion() {
   $('battle-feedback').classList.add('hidden');
   $('battle-feedback').innerHTML = '';
   $('battle-next').classList.add('hidden');
+  // The question panel scrolls internally (the fight stays pinned above) —
+  // start each new question at the top of the panel.
+  if (ui) ui.scrollTop = 0;
 
   // Render sign image floating over the demon side if applicable
   if (q.signImage) {
@@ -1010,6 +1013,15 @@ function answerBattle(chosen, q) {
       renderBattleQuestion();
     };
   }
+  // If the explanation + next button landed below the panel's fold, nudge
+  // them into view. This scrolls only the internal panel — the fight above
+  // stays exactly where it is. (When the battle is ending, next stays
+  // hidden, so surface the feedback text instead.)
+  setTimeout(() => {
+    const next = $('battle-next');
+    const target = (next && !next.classList.contains('hidden')) ? next : fb;
+    try { target.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); } catch (e) {}
+  }, 80);
 }
 
 // Boss claws the hero. Shake, slash, sparks, dmg popup.

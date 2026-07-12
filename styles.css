@@ -1576,14 +1576,30 @@ html, body {
    BATTLE SCENE
    ============================================================ */
 #scene-battle { padding: 0; }
+/* One-viewport battle: the stage is pinned by layout (flex column), not
+   position:sticky — the old sticky silently died because overflow-x:hidden
+   on .battle-arena made it the scroll container, so answering questions
+   scrolled the fight off-screen. Now the fight can never leave view: the
+   question panel below scrolls internally instead of the page. */
+#scene-battle.active {
+  height: 100vh;
+  height: 100dvh;
+  min-height: 0;
+  overflow: hidden;
+}
+/* The sources footer below the arena would make the page itself scrollable
+   during a fight (letting the stage slide out of view) — hide it in battle. */
+body:has(#scene-battle.active) .app-footer { display: none; }
 .battle-arena {
   --bc: var(--pink);
   position: relative;
-  min-height: 100vh;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
   background:
     radial-gradient(ellipse at center 30%, rgba(184,29,44,0.28), transparent 60%),
     linear-gradient(180deg, #1a0309 0%, var(--oxblood) 65%, #0d0205 100%);
-  overflow-x: hidden;
+  overflow: hidden;
 }
 
 .battle-sky {
@@ -1601,10 +1617,10 @@ html, body {
   to   { transform: translateX(20px) translateY(-20px); }
 }
 
-/* STICKY STAGE — horizontal 2-fighter battlefield */
+/* STAGE — horizontal 2-fighter battlefield, layout-pinned at the top */
 .battle-stage {
-  position: sticky;
-  top: 0;
+  position: relative;
+  flex: 0 0 auto;
   z-index: 5;
   display: grid;
   grid-template-columns: 1fr auto 1fr;
@@ -1614,7 +1630,6 @@ html, body {
   background: linear-gradient(180deg, rgba(10,2,4,0.94) 0%, rgba(20,4,8,0.88) 70%, rgba(20,4,8,0.4) 100%);
   backdrop-filter: blur(8px);
   border-bottom: 1px solid rgba(255,166,201,0.12);
-  min-height: 240px;
 }
 
 .fighter {
@@ -1940,10 +1955,14 @@ html, body {
 .battle-ui {
   position: relative;
   z-index: 4;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
   background: linear-gradient(180deg, rgba(20,4,8,0.55) 0%, rgba(20,4,8,0.92) 30%, rgba(20,4,8,0.98) 100%);
   border-top: 1px solid rgba(255,166,201,0.18);
   padding: 24px 24px 40px;
-  min-height: 50vh;
 }
 .battle-topic {
   font-family: var(--font-mono);
@@ -2066,14 +2085,28 @@ html, body {
 @media (max-width: 640px) {
   .battle-stage {
     padding: 14px 14px 12px;
-    min-height: 200px;
     gap: 8px;
   }
   .battle-vs { margin-bottom: 22px; gap: 2px; }
   .vs-mark { font-size: 10px; }
-  .battle-ui { padding: 18px 16px 28px; min-height: 60vh; }
+  .battle-ui { padding: 18px 16px 28px; }
   .battle-stage-sign { width: 56px; top: 6px; right: 6px; }
   .fighter-hp { height: 12px; }
+}
+
+/* Short viewports (small laptops, landscape phones): shrink the fighters
+   so the question panel keeps real room — the fight stays fully visible. */
+@media (max-height: 780px) {
+  .battle-stage { padding: 12px 20px 10px; }
+  .fighter-portrait { width: clamp(84px, 13vw, 130px); }
+  .fighter-portrait-demon { width: clamp(96px, 15vw, 150px); }
+  .battle-vs { margin-bottom: 18px; }
+}
+@media (max-height: 600px) {
+  .fighter-portrait { width: clamp(64px, 10vw, 96px); }
+  .fighter-portrait-demon { width: clamp(72px, 12vw, 110px); }
+  .fighter-combo, .fighter-threat { display: none; }
+  .battle-ui { padding-top: 14px; }
 }
 
 
