@@ -143,6 +143,7 @@ const Sound = (() => {
 
   function say(text, { pitch = 0.4, rate = 0.86, volume = 0.95, deep = true } = {}) {
     if (!voiceOn || !text || !('speechSynthesis' in window)) return;
+    if (window.Music && Music.duck) Music.duck(3); // dip music under the line
     try {
       speechSynthesis.cancel();
       const u = new SpeechSynthesisUtterance(text);
@@ -170,6 +171,7 @@ const Sound = (() => {
   // the browser-voice fallback still speaks the line.
   function playClip(path, onFail) {
     if (!voiceOn || !clipSet.has(path)) return false;
+    if (window.Music && Music.duck) Music.duck(3.5); // dip music under the clip
     try {
       if (currentClip) { try { currentClip.pause(); } catch (e) {} }
       const a = new Audio(`audio/${path}.mp3`);

@@ -404,6 +404,8 @@ function applyTheme(themeId) {
     if (typeof Sound.setBossBank === 'function') Sound.setBossBank(bank);
     else if (typeof Sound.setTauntBank === 'function') Sound.setTauntBank(bank);
   }
+  // Music engine follows the world too (its own per-world songbook).
+  if (window.Music && typeof Music.setTheme === 'function') Music.setTheme(t.id);
 
   // 5. Brand copy
   const mapTitle = document.querySelector('.map-title');

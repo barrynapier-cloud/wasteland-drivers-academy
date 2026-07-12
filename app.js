@@ -42,6 +42,13 @@ const lessonById = (chap, id) => chap.lessons.find(l => l.id === id);
 function showScene(id) {
   document.querySelectorAll('.scene').forEach(s => s.classList.toggle('active', s.id === id));
   window.scrollTo({ top: 0, behavior: 'instant' });
+  // Music follows the scene: battle track (with this boss's motif) in the
+  // arena, silence over the defeat dirge, the world theme everywhere else.
+  if (window.Music) {
+    if (id === 'scene-battle') Music.scene('battle', currentChapter && currentChapter.id);
+    else if (id === 'scene-defeat') Music.scene('off');
+    else Music.scene('world');
+  }
 }
 
 // ---------- Purchase gate + persistence (localStorage) ----------
@@ -505,6 +512,19 @@ function initAudioToggles() {
     voiceBtn.textContent = on ? '🗣' : '🤐';
     voiceBtn.classList.toggle('off', !on);
   });
+  const musicBtn = $('toggle-music');
+  if (musicBtn) {
+    // Music remembers its off-state across sessions — reflect it at boot.
+    const startOn = !(window.Music && !Music.isOn());
+    musicBtn.textContent = startOn ? '🎵' : '🔕';
+    musicBtn.classList.toggle('off', !startOn);
+    musicBtn.addEventListener('click', () => {
+      const on = !(window.Music && Music.isOn());
+      if (window.Music) Music.setOn(on);
+      musicBtn.textContent = on ? '🎵' : '🔕';
+      musicBtn.classList.toggle('off', !on);
+    });
+  }
 }
 
 // ============================================================
