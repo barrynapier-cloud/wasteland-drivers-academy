@@ -1991,6 +1991,21 @@ body:has(#scene-battle.active) .app-footer { display: none; }
   font-size: 14px;
 }
 
+/* Arcade alignment: the battle column sits centered under the VS pivot.
+   Question and topic read centered like an attract screen; answer text
+   stays left-aligned inside the buttons for scannability. Battle only —
+   quiz/trial keep their reading layout. */
+.battle-topic { text-align: center; }
+.battle-q { margin-left: auto; margin-right: auto; text-align: center; }
+.battle-options { margin-left: auto; margin-right: auto; width: 100%; }
+.battle-ui .battle-feedback {
+  max-width: 720px;
+  margin-left: auto;
+  margin-right: auto;
+  text-align: left;
+}
+#battle-next { display: block; margin-left: auto; margin-right: auto; }
+
 /* Arena hit flash overlays */
 .battle-arena.flash::after {
   content: '';
