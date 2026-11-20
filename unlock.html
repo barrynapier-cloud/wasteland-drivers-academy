@@ -3,15 +3,18 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>Unlock — Permit Legends</title>
+  <title>Unlock - Permit Legends</title>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700;900&family=Inter:wght@400;600;800&family=Press+Start+2P&display=swap" rel="stylesheet" />
   <style>
+    * { box-sizing: border-box; }
     body { margin: 0; min-height: 100vh; display: grid; place-items: center; background: radial-gradient(ellipse at top, #2a0810, #150305 65%); color: #fff0f5; font-family: "Inter", system-ui, sans-serif; }
     .card { max-width: 420px; width: calc(100% - 48px); background: rgba(20,5,10,0.65); border: 1px solid rgba(255,166,201,0.3); border-radius: 24px; padding: 40px 34px; text-align: center; }
     h1 { font-family: "Cinzel", serif; font-weight: 900; font-size: 30px; margin: 0 0 8px; color: #fff7eb; }
-    p { color: #b89aa8; font-size: 14px; }
-    input { width: 100%; padding: 14px 16px; margin: 18px 0 12px; border-radius: 12px; border: 1px solid rgba(255,166,201,0.35); background: rgba(0,0,0,0.35); color: #fff7eb; font-family: "Press Start 2P", monospace; font-size: 11px; text-align: center; letter-spacing: 0.15em; text-transform: uppercase; }
-    button { width: 100%; padding: 15px; border: 0; border-radius: 999px; background: linear-gradient(120deg, #ff6fa3, #a855f7); color: #fff; font-weight: 800; font-size: 15px; cursor: pointer; }
+    p { color: #b89aa8; font-size: 14px; line-height: 1.5; }
+    input { width: 100%; padding: 14px 16px; margin: 8px 0; border-radius: 12px; border: 1px solid rgba(255,166,201,0.35); background: rgba(0,0,0,0.35); color: #fff7eb; font-family: "Inter", system-ui, sans-serif; font-size: 14px; }
+    button { width: 100%; padding: 15px; margin-top: 10px; border: 0; border-radius: 999px; background: linear-gradient(120deg, #ff6fa3, #a855f7); color: #fff; font-weight: 800; font-size: 15px; cursor: pointer; }
+    button.ghost { background: transparent; border: 1px solid rgba(255,166,201,0.35); color: #e9d6e0; font-weight: 600; }
+    .hidden { display: none; }
     .msg { min-height: 22px; font-size: 13px; margin-top: 12px; }
     .msg.ok { color: #6ee7b7; }
     .msg.bad { color: #ff8094; }
@@ -20,38 +23,85 @@
 </head>
 <body>
   <div class="card">
-    <h1>Claim Your Legend</h1>
-    <p>Enter the access code from your purchase confirmation. It unlocks every world, on this device, forever.</p>
-    <input id="code" placeholder="LEGEND-XXXX-XXXX" maxlength="16" autocomplete="off" />
-    <button id="go">Unlock →</button>
+    <h1>Verify Your Unlock</h1>
+    <p>Sign in with the Permit Legends account linked to your purchase so we can verify your server entitlement.</p>
+    <div id="auth-box">
+      <input id="username" placeholder="username or email" autocomplete="username" autocapitalize="off" />
+      <input id="password" type="password" placeholder="password (6+ characters)" autocomplete="current-password" />
+      <button id="signin-btn" type="button">Sign In &amp; Verify</button>
+      <button id="signup-btn" class="ghost" type="button">Create Account</button>
+    </div>
+    <div id="verify-box" class="hidden">
+      <p id="acct-label"></p>
+      <button id="recheck-btn" type="button">Verify Unlock Status</button>
+      <button id="signout-btn" class="ghost" type="button">Sign Out</button>
+    </div>
     <p class="msg" id="msg"></p>
-    <p><a href="index.html">← Back</a> · <a href="play.html">Play free chapter</a></p>
+    <p><a href="index.html">Back</a> · <a href="play.html">Play free chapter</a></p>
   </div>
+  <script src="account.js?v=20260710c"></script>
   <script>
-    function validCode(code) {
-      const m = /^LEGEND-([A-Z0-9]{4})-([A-Z0-9]{4})$/.exec((code || '').trim().toUpperCase());
-      if (!m) return false;
-      const body = m[1] + m[2];
-      return body.split('').reduce((a, ch) => a + ch.charCodeAt(0) * 7, 0) % 97 === 55;
-    }
-    const msg = document.getElementById('msg');
-    const input = document.getElementById('code');
-    function attempt(code) {
-      if (validCode(code)) {
-        try { localStorage.setItem('pl_unlock', code.trim().toUpperCase()); } catch (e) {}
-        msg.className = 'msg ok';
-        msg.textContent = 'Unlocked. Entering the wastes…';
-        setTimeout(() => { location.href = 'play.html'; }, 900);
-      } else {
-        msg.className = 'msg bad';
-        msg.textContent = 'That code is not in the ledger. Check for typos.';
+    (function () {
+      try { localStorage.removeItem('pl_unlock'); } catch (e) {}
+
+      const msg = document.getElementById('msg');
+      const authBox = document.getElementById('auth-box');
+      const verifyBox = document.getElementById('verify-box');
+      const acctLabel = document.getElementById('acct-label');
+      const userEl = document.getElementById('username');
+      const passEl = document.getElementById('password');
+
+      function setMsg(text, ok) {
+        msg.className = ok === true ? 'msg ok' : ok === false ? 'msg bad' : 'msg';
+        msg.textContent = text || '';
       }
-    }
-    document.getElementById('go').addEventListener('click', () => attempt(input.value));
-    input.addEventListener('keydown', (e) => { if (e.key === 'Enter') attempt(input.value); });
-    // Arriving from a Stripe success redirect: ?code=LEGEND-....
-    const q = new URLSearchParams(location.search).get('code');
-    if (q) { input.value = q; attempt(q); }
+
+      async function checkEntitlement() {
+        if (!window.Account) {
+          setMsg('Account service unavailable. Reload and try again.', false);
+          return;
+        }
+        setMsg('Checking server entitlement...', null);
+        await Account.init();
+        const who = Account.email && Account.email();
+        if (!who) {
+          authBox.classList.remove('hidden');
+          verifyBox.classList.add('hidden');
+          setMsg('', null);
+          return;
+        }
+        authBox.classList.add('hidden');
+        verifyBox.classList.remove('hidden');
+        acctLabel.textContent = 'Signed in as ' + who;
+        if (Account.isUnlocked()) {
+          setMsg('Full version verified on your account. Entering the wastes...', true);
+          setTimeout(() => { location.href = 'play.html'; }, 900);
+        } else {
+          setMsg('No paid unlock found on this account yet. Complete checkout from the home page while signed in, then tap Verify Unlock Status.', false);
+        }
+      }
+
+      async function handleAuth(fn) {
+        setMsg('Signing in...', null);
+        const res = await fn(userEl.value, passEl.value);
+        if (!res.ok) {
+          setMsg(res.err || 'Authentication failed.', false);
+          return;
+        }
+        await checkEntitlement();
+      }
+
+      document.getElementById('signin-btn').addEventListener('click', () => handleAuth(Account.signIn));
+      document.getElementById('signup-btn').addEventListener('click', () => handleAuth(Account.signUp));
+      passEl.addEventListener('keydown', (e) => { if (e.key === 'Enter') handleAuth(Account.signIn); });
+      document.getElementById('recheck-btn').addEventListener('click', () => checkEntitlement());
+      document.getElementById('signout-btn').addEventListener('click', () => {
+        Account.signOut();
+        checkEntitlement();
+      });
+
+      window.addEventListener('load', () => { checkEntitlement(); });
+    })();
   </script>
 </body>
 </html>

@@ -51,19 +51,13 @@ function showScene(id) {
   }
 }
 
-// ---------- Purchase gate + persistence (localStorage) ----------
-function validCode(code) {
-  const m = /^LEGEND-([A-Z0-9]{4})-([A-Z0-9]{4})$/.exec((code || '').trim().toUpperCase());
-  if (!m) return false;
-  const body = m[1] + m[2];
-  return body.split('').reduce((a, ch) => a + ch.charCodeAt(0) * 7, 0) % 97 === 55;
-}
+// ---------- Purchase gate + persistence (server-verified account) ----------
 function isPaid() {
-  // Native store builds are paid upfront — everything unlocked.
+  // Native store builds are paid upfront - everything unlocked.
   if (window.PL_NATIVE_PAID === true) return true;
-  // Account entitlement follows the player across devices.
+  // Paid web unlocks require server-granted Firestore profiles/{uid}.unlocked.
   if (window.Account && Account.isUnlocked && Account.isUnlocked()) return true;
-  try { return validCode(localStorage.getItem('pl_unlock') || ''); } catch (e) { return false; }
+  return false;
 }
 
 // Saves are namespaced per signed-in account so two kids on one family
